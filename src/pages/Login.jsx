@@ -1,9 +1,9 @@
 // src/pages/Home.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import supabase from '../supabaseClient'; // Correct import
 import 'bootstrap/dist/css/bootstrap.min.css';
-import '../style.css';
+import '../styles.css';
 
 const Home = () => {
   const [showSignup, setShowSignup] = useState(false);
@@ -33,7 +33,7 @@ const Home = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });

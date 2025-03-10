@@ -348,4 +348,12 @@
   .dashboard-layout main {
     flex: 1;
   }
+
+  .no-underline {
+    text-decoration: none;
+    color: inherit; /* Optional: to inherit the color from the parent */
+  }
   
+  .no-underline:hover {
+    text-decoration: none;
+  }

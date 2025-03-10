@@ -4,6 +4,7 @@ import AuthLayout from './components/AuthLayout';
 import DashboardLayout from './components/DashboardLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import HealthOverview from './pages/HealthOverview'; // Import the HealthOverview page
 
 function App() {
   return (
@@ -24,6 +25,14 @@ function App() {
           element={
             <DashboardLayout>
               <Dashboard />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/health-overview"
+          element={
+            <DashboardLayout>
+              <HealthOverview />
             </DashboardLayout>
           }
         />

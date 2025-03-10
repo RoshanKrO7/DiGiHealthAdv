@@ -35,7 +35,7 @@ const Dashboard = () => {
                     if (userNameEl) {
                         userNameEl.textContent = `${profile.first_name} ${profile.last_name}`;
                     }
-                    console.log(`Welcome back, ${profile.first_name}!`);
+                    // console.log(`Welcome back, ${profile.first_name}!`);
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);

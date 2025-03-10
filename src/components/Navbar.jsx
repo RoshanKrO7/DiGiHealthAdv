@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { setupMenuListeners } from '../utils/menuHandlers';
+// import '../style.css'; // Ensure you import your CSS file
 
 const Navbar = () => {
   useEffect(() => {
@@ -9,9 +10,9 @@ const Navbar = () => {
 
   return (
     <nav id="menu">
-        <div className="logo"><a href="/dashboard" data-link>
+        <div className="logo"><Link to="/dashboard">
             <img src="./favicon_io/android-chrome-512x512-Photoroom.png" alt="Logo" className="logo"/>
-        </a></div>
+        </Link></div>
         <div className="menu-item">
             <div className="menu-text">
                 <a href="#" data-link>Your Journey</a>
@@ -20,7 +21,7 @@ const Navbar = () => {
                 <div className="icon-box" id="health-overview">
                     <div className="icon"><i className="fa fa-hospital-user"></i></div>
                     <div className="text">
-                        <div className="title">Health Overview</div>
+                        <div className="title"><Link to="/health-overview" className="no-underline">Health Overview</Link></div>
                         <div className="sub-text">See, add and update your Journey</div>
                     </div>
                 </div>
