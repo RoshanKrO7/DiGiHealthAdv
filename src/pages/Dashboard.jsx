@@ -4,10 +4,12 @@ import { supabase } from '../utils/main';
 import '../dashboardstyle.css'; // Dashboard-specific styles
 import { setupMenuListeners } from '../utils/menuHandlers';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import Spinner from '../components/Spinner'; // Import Spinner component
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [notification, setNotification] = useState(null);
+    const [loading, setLoading] = useState(true); // Add loading state
 
     const showNotification = (message, type = 'info') => {
         setNotification({ message, type });
@@ -39,6 +41,8 @@ const Dashboard = () => {
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);
+            } finally {
+                setLoading(false); // Set loading to false after fetching profile
             }
         }
         fetchUserProfile();
@@ -99,6 +103,10 @@ const Dashboard = () => {
             }
         };
     }, [navigate]);
+
+    if (loading) {
+        return <Spinner />; // Show spinner while loading
+    }
 
     return (
         <div id="dashboard">

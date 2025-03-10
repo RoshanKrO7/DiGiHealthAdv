@@ -1,0 +1,97 @@
+/* ProfilePage.css */
+.profile-page {
+  max-width: 800px;
+  margin: 100px auto; /* Adjusted margin to create space from the navbar */
+  padding: 20px;
+  background-color: #f8f9fa; /* Set your desired background color */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
+  padding-bottom: 20px; /* Add some padding to the bottom */
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-details, .disease-management, .parameter-management {
+  margin-top: 20px;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.profile-field label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.profile-field input, .profile-field textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.profile-field span {
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.management-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.disease-management, .parameter-management {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.disease-list, .parameter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.disease-item, .parameter-item {
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+input[type="text"] {
+  width: 100%;
+  margin-bottom: 10px;
+}
