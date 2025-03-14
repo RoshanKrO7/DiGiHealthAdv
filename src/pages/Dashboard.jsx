@@ -5,11 +5,63 @@ import '../dashboardstyle.css'; // Dashboard-specific styles
 import { setupMenuListeners } from '../utils/menuHandlers';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Spinner from '../components/Spinner'; // Import Spinner component
+import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import {
+  FaHeartbeat,
+  FaPills,
+  FaCalendarAlt,
+  FaFileMedical,
+  FaUserMd,
+  FaVideo,
+  FaChartLine,
+  FaBell,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaQrcode,
+  FaSyringe,
+  FaStethoscope,
+  FaBone,
+  FaAmbulance
+} from 'react-icons/fa';
+import { Line, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [notification, setNotification] = useState(null);
     const [loading, setLoading] = useState(true); // Add loading state
+    const [healthData, setHealthData] = useState({
+        vitals: [],
+        medications: [],
+        appointments: [],
+        conditions: [],
+        alerts: []
+    });
+    const [error, setError] = useState(null);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ message, type });
@@ -104,6 +156,51 @@ const Dashboard = () => {
         };
     }, [navigate]);
 
+    useEffect(() => {
+        fetchDashboardData();
+    }, [user]);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            
+            // Fetch all relevant data
+            const [
+                { data: vitals, error: vitalsError },
+                { data: medications, error: medicationsError },
+                { data: appointments, error: appointmentsError },
+                { data: conditions, error: conditionsError },
+                { data: alerts, error: alertsError }
+            ] = await Promise.all([
+                supabase.from('vitals').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7),
+                supabase.from('medications').select('*').eq('user_id', user.id),
+                supabase.from('appointments').select('*').eq('user_id', user.id).order('date', { ascending: true }).limit(5),
+                supabase.from('conditions').select('*').eq('user_id', user.id),
+                supabase.from('alerts').select('*').eq('user_id', user.id).eq('status', 'active')
+            ]);
+
+            if (vitalsError) throw vitalsError;
+            if (medicationsError) throw medicationsError;
+            if (appointmentsError) throw appointmentsError;
+            if (conditionsError) throw conditionsError;
+            if (alertsError) throw alertsError;
+
+            setHealthData({
+                vitals: vitals || [],
+                medications: medications || [],
+                appointments: appointments || [],
+                conditions: conditions || [],
+                alerts: alerts || []
+            });
+
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return <Spinner />; // Show spinner while loading
     }
@@ -132,67 +229,67 @@ const Dashboard = () => {
                 {/* Dashboard Cards Section */}
                 <div className="home-cards">
                     <div className="card" id="upcoming-appointments-card">
-                        <div className="icon"><i className="fa fa-calendar-check"></i></div>
+                        <div className="icon"><FaCalendarAlt /></div>
                         <div className="content">
                             <h3>Upcoming Appointments</h3>
                             <p>View and manage your appointments effortlessly.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/appointments" className="action-link">View Details</Link>
                         </div>
                     </div>
                     {/* Other cards (vaccination records, health records, etc.) */}
                     <div className="card" id="qrCodeCard">
-                        <div className="icon"><i className="fa fa-ambulance"></i></div>
+                        <div className="icon"><FaQrcode /></div>
                         <div className="content">
                             <h3>Emergency Contact QR Code</h3>
                             <p>Your emergency contact QR code.</p>
                         </div>
                     </div>
                     <div className="card" id="vaccination-records-card">
-                        <div className="icon"><i className="fa fa-syringe"></i></div>
+                        <div className="icon"><FaSyringe /></div>
                         <div className="content">
                             <h3>Vaccination Records</h3>
                             <p>Track and update your vaccination history.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/vaccinations" className="action-link">View Details</Link>
                         </div>
                     </div>
                     <div className="card" id="health-records-card">
-                        <div className="icon"><i className="fa fa-file-medical"></i></div>
+                        <div className="icon"><FaFileMedical /></div>
                         <div className="content">
                             <h3>Health Records</h3>
                             <p>Access all your health records in one place.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/health-records" className="action-link">View Details</Link>
                         </div>
                     </div>
                     <div className="card" id="doctor-consultations-card">
-                        <div className="icon"><i className="fa fa-stethoscope"></i></div>
+                        <div className="icon"><FaStethoscope /></div>
                         <div className="content">
                             <h3>Doctor Consultations</h3>
                             <p>Review past doctor consultations and notes.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/consultations" className="action-link">View Details</Link>
                         </div>
                     </div>
                     <div className="card" id="medication-history-card">
-                        <div className="icon"><i className="fa fa-pills"></i></div>
+                        <div className="icon"><FaPills /></div>
                         <div className="content">
                             <h3>Medication History</h3>
                             <p>Keep track of your medications and prescriptions.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/medications" className="action-link">View Details</Link>
                         </div>
                     </div>
                     <div className="card" id="bone-health-card">
-                        <div className="icon"><i className="fa fa-bone"></i></div>
+                        <div className="icon"><FaBone /></div>
                         <div className="content">
                             <h3>Bone Health</h3>
                             <p>Monitor your bone health status and treatments.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/bone-health" className="action-link">View Details</Link>
                         </div>
                     </div>
                     <div className="card" id="emergency-contacts-card">
-                        <div className="icon"><i className="fa fa-ambulance"></i></div>
+                        <div className="icon"><FaAmbulance /></div>
                         <div className="content">
                             <h3>Emergency Contacts</h3>
                             <p>Update and view your emergency contact details.</p>
-                            <a href="#" className="action-link">View Details</a>
+                            <Link to="/emergency-contacts" className="action-link">View Details</Link>
                         </div>
                     </div>
                 </div>

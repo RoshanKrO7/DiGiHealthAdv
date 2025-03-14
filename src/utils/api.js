@@ -1,5 +1,5 @@
 // utils/api.js
-import supabase from '../supabaseClient';
+import {supabase} from './supabaseClient';
 
 export const getUserProfile = async () => {
   const { data: { user } } = await supabase.auth.getUser();

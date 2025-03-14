@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getUserProfile, updateUserProfile, getDiseaseNames, addDiseaseName, getParameters, addParameter } from '../utils/api';
-import supabase from '../supabaseClient';
+import {supabase} from '../utils/main';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './ProfilePage.css';

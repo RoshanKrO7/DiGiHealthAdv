@@ -1,11 +1,11 @@
-// src/pages/Home.jsx
+// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import supabase from '../supabaseClient'; // Correct import
+import { supabase } from '../utils/main'; // Correct import
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles.css';
 
-const Home = () => {
+const Login = () => {
   const [showSignup, setShowSignup] = useState(false);
   const [notification, setNotification] = useState(null);
   
@@ -95,7 +95,7 @@ const Home = () => {
     <div id="app">
       <header>
         <img
-          src="/favicon_io/android-chrome-512x512-Photoroom.png"
+          src={process.env.PUBLIC_URL + '/favicon_io/android-chrome-512x512-Photoroom.png'}
           alt="Logo"
           className="logo" style={{width: "250px", height: "100%"}}
         />
@@ -237,4 +237,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Login;
