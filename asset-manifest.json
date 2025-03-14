@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/DiGiHealthAdv/static/css/main.8cce7de7.css",
+    "main.js": "/DiGiHealthAdv/static/js/main.e02a0a5e.js",
+    "static/js/952.14612d7a.chunk.js": "/DiGiHealthAdv/static/js/952.14612d7a.chunk.js",
+    "static/js/453.a0b1a081.chunk.js": "/DiGiHealthAdv/static/js/453.a0b1a081.chunk.js",
+    "static/media/fa-solid-900.ttf": "/DiGiHealthAdv/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
+    "static/media/fa-brands-400.ttf": "/DiGiHealthAdv/static/media/fa-brands-400.1815e00441357e01619e.ttf",
+    "static/media/fa-solid-900.woff2": "/DiGiHealthAdv/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
+    "static/media/fa-brands-400.woff2": "/DiGiHealthAdv/static/media/fa-brands-400.c210719e60948b211a12.woff2",
+    "static/media/fa-regular-400.ttf": "/DiGiHealthAdv/static/media/fa-regular-400.914997e1bdfc990d0897.ttf",
+    "static/media/fa-regular-400.woff2": "/DiGiHealthAdv/static/media/fa-regular-400.89999bdf5d835c012025.woff2",
+    "static/media/fa-v4compatibility.ttf": "/DiGiHealthAdv/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
+    "static/media/fa-v4compatibility.woff2": "/DiGiHealthAdv/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
+    "index.html": "/DiGiHealthAdv/index.html",
+    "main.8cce7de7.css.map": "/DiGiHealthAdv/static/css/main.8cce7de7.css.map",
+    "main.e02a0a5e.js.map": "/DiGiHealthAdv/static/js/main.e02a0a5e.js.map",
+    "952.14612d7a.chunk.js.map": "/DiGiHealthAdv/static/js/952.14612d7a.chunk.js.map",
+    "453.a0b1a081.chunk.js.map": "/DiGiHealthAdv/static/js/453.a0b1a081.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8cce7de7.css",
+    "static/js/main.e02a0a5e.js"
+  ]
+}
