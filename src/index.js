@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
+import './styles/buttons.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorker';
 import reportWebVitals from './reportWebVitals';

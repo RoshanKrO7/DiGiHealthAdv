@@ -1,97 +1,147 @@
 /* ProfilePage.css */
 .profile-page {
-  max-width: 800px;
-  margin: 100px auto; /* Adjusted margin to create space from the navbar */
-  padding: 20px;
-  background-color: #f8f9fa; /* Set your desired background color */
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
   min-height: 100vh;
-  padding-bottom: 20px; /* Add some padding to the bottom */
+  background-color: #f8f9fa;
 }
 
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+.profile-sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+.profile-picture-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
 }
 
 .profile-picture {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
+  width: 150px;
+  height: 150px;
   object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.navigation-buttons {
-  display: flex;
-  gap: 10px;
+.card {
+  border: none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
 }
 
-.profile-details, .disease-management, .parameter-management {
-  margin-top: 20px;
-}
-
-.profile-details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+.card-body {
+  padding: 2rem;
 }
 
 .profile-field {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 10px;
+  margin-bottom: 1.5rem;
 }
 
 .profile-field label {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
 }
 
-.profile-field input, .profile-field textarea {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  padding: 0.75rem;
+  transition: all 0.2s;
 }
 
-.profile-field span {
-  padding: 10px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+.form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-.management-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.form-control-plaintext {
+  padding: 0.75rem 0;
+  margin-bottom: 0;
+  color: #495057;
 }
 
-.disease-management, .parameter-management {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-.disease-list, .parameter-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
 }
 
-.disease-item, .parameter-item {
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.list-group-item {
+  border: none;
+  padding: 1rem 1.5rem;
+  color: #495057;
+  transition: all 0.2s;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+  color: #0d6efd;
+}
+
+.list-group-item.active {
   background-color: #e9ecef;
-  padding: 10px;
-  border-radius: 5px;
+  color: #0d6efd;
+  border: none;
 }
 
-input[type="text"] {
-  width: 100%;
-  margin-bottom: 10px;
+.badge {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.input-group {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input-group .form-control {
+  border: none;
+}
+
+.input-group .btn {
+  padding: 0.75rem 2rem;
+  border: none;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .profile-picture-container {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .profile-picture {
+    width: 120px;
+    height: 120px;
+  }
 }

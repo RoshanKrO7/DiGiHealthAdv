@@ -71,12 +71,14 @@ const Login = () => {
 
       // Optionally insert additional profile data into your "profiles" table
       if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert([
+        const { error: profileError } = await supabase.from('detailed_profiles').insert([
           {
             id: data.user.id,
             first_name: firstName,
             last_name: lastName,
             email: signupEmail,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
         ]);
         if (profileError) throw profileError;

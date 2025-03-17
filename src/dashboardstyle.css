@@ -480,3 +480,37 @@ button:hover {
     background-color: #0056b3; 
 }
 
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .hover-card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .hover-card .card-text {
+        color: #cbd5e0 !important;
+    }
+
+    .hover-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+}
+

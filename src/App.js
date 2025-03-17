@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import DashboardLayout from './components/DashboardLayout';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -23,11 +25,33 @@ import ProfilePage from './pages/ProfilePage';
 import SecuritySettings from './pages/SecuritySettings';
 import DataBackup from './pages/DataBackup';
 import DatabaseSetup from './pages/DatabaseSetup';
+import HealthMetricsVisualizer from './components/HealthMetricsVisualizer';
+import MedicalImageAnalyzer from './components/MedicalImageAnalyzer';
+import HealthAssistant from './components/HealthAssistant';
+import AIInsightsDashboard from './components/AIInsightsDashboard';
+import HealthMetricsAI from './pages/ai/HealthMetricsAI';
+import ImageAnalysisAI from './pages/ai/ImageAnalysisAI';
+import HealthAssistantAI from './pages/ai/HealthAssistantAI';
+import SymptomCheckerAI from './pages/ai/SymptomCheckerAI';
+import MedicalImageAnalysis from './pages/ai/MedicalImageAnalysis';
+import HealthRecommendations from './pages/ai/HealthRecommendations';
 
 function App() {
   return (
     <Router basename="/DiGiHealthAdv">
       <AuthProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+        />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -49,6 +73,21 @@ function App() {
           <Route path="/settings/security" element={<DashboardLayout><SecuritySettings /></DashboardLayout>} />
           <Route path="/settings/backup" element={<DashboardLayout><DataBackup /></DashboardLayout>} />
           <Route path="/admin/database-setup" element={<DashboardLayout><DatabaseSetup /></DashboardLayout>} />
+          <Route path="/health-metrics" element={<DashboardLayout><HealthMetricsVisualizer /></DashboardLayout>} />
+          <Route path="/image-analysis" element={<DashboardLayout><MedicalImageAnalyzer /></DashboardLayout>} />
+          <Route path="/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} />
+          <Route path="/ai-insights" element={<DashboardLayout><AIInsightsDashboard /></DashboardLayout>} />
+          <Route path="/health-metrics/upload" element={<DashboardLayout><HealthMetricsVisualizer mode="upload" /></DashboardLayout>} />
+          <Route path="/image-analysis/history" element={<DashboardLayout><MedicalImageAnalyzer mode="history" /></DashboardLayout>} />
+          <Route path="/health-assistant/recommendations" element={<DashboardLayout><HealthAssistant mode="recommendations" /></DashboardLayout>} />
+          <Route path="/ai/health-metrics" element={<DashboardLayout><HealthMetricsAI /></DashboardLayout>} />
+          <Route path="/ai/image-analysis" element={<DashboardLayout><MedicalImageAnalysis /></DashboardLayout>} />
+          <Route path="/ai/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} />
+          <Route path="/ai/health-recommendations" element={<DashboardLayout><HealthRecommendations /></DashboardLayout>} />
+          <Route path="/ai/symptom-checker" element={<DashboardLayout><HealthAssistant mode="symptoms" /></DashboardLayout>} />
+          <Route path="/ai/image-analysis" element={<MedicalImageAnalysis />} />
+          <Route path="/ai/health-assistant" element={<HealthAssistant />} />
+          <Route path="/ai/health-recommendations" element={<HealthRecommendations />} />
         </Routes>
       </AuthProvider>
     </Router>

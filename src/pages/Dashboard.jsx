@@ -22,7 +22,9 @@ import {
   FaSyringe,
   FaStethoscope,
   FaBone,
-  FaAmbulance
+  FaAmbulance,
+  FaRobot,
+  FaBrain
 } from 'react-icons/fa';
 import { Line, Doughnut } from 'react-chartjs-2';
 import {
@@ -53,13 +55,14 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [notification, setNotification] = useState(null);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
     const [healthData, setHealthData] = useState({
         vitals: [],
         medications: [],
         appointments: [],
         conditions: [],
-        alerts: []
+        alerts: [],
+        profile: null
     });
     const [error, setError] = useState(null);
 
@@ -69,234 +72,203 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        // Fetch user profile and update UI
-        async function fetchUserProfile() {
+        const fetchData = async () => {
             try {
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
-                console.log('Fetched user:', user, 'Error:', userError);
                 if (userError || !user) {
-                    window.location.href = '/';
+                    navigate('/');
                     return;
                 }
-                const { data: profile, error } = await supabase
-                    .from('profiles')
+                
+                const { data: profileData, error: profileError } = await supabase
+                    .from('detailed_profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single();
-                if (error) throw error;
-                if (profile) {
-                    const userNameEl = document.getElementById('user-name');
-                    if (userNameEl) {
-                        userNameEl.textContent = `${profile.first_name} ${profile.last_name}`;
+
+                if (profileError) {
+                    if (profileError.code === 'PGRST116') {
+                        // Profile doesn't exist, create one
+                        const { data: newProfile, error: createError } = await supabase
+                            .from('detailed_profiles')
+                            .insert([{ id: user.id }])
+                            .select()
+                            .single();
+                            
+                        if (createError) throw createError;
+                        setHealthData(prev => ({ ...prev, profile: newProfile }));
+                    } else {
+                        throw profileError;
                     }
-                    // console.log(`Welcome back, ${profile.first_name}!`);
+                } else {
+                    setHealthData(prev => ({ ...prev, profile: profileData }));
                 }
             } catch (error) {
-                console.error('Error fetching profile:', error);
+                console.error('Error fetching data:', error);
+                setError('Failed to load dashboard data');
             } finally {
-                setLoading(false); // Set loading to false after fetching profile
-            }
-        }
-        fetchUserProfile();
-
-        // Set up menu listeners from menuHandlers.js
-        setupMenuListeners();
-
-        // Set up Logout listener
-        const logoutDiv = document.getElementById('logout-div');
-        if (logoutDiv) {
-            logoutDiv.addEventListener('click', async () => {
-                try {
-                    const { error } = await supabase.auth.signOut();
-                    if (error) throw error;
-                    showNotification('Logout successful!', 'success'); // Show success notification
-                    setTimeout(() => {
-                        navigate('/');
-                    }, 3000); // Adjust delay as needed
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    showNotification('Logout failed. Please try again.', 'danger'); // Show error notification
-                }
-            });
-        }
-
-        // Load QR Code
-        async function loadQRCode() {
-            const userResponse = await supabase.auth.getUser();
-            if (!userResponse || !userResponse.data.user) return;
-            const user_id = userResponse.data.user.id;
-            const { data, error } = await supabase
-                .from('emergency_contacts')
-                .select('qr_code_url')
-                .eq('user_id', user_id)
-                .single();
-            if (error) {
-                console.error('Error fetching QR code URL:', error);
-                return;
-            }
-            if (data && data.qr_code_url) {
-                const qrCodeContainer = document.getElementById('qrCodeCard');
-                if (qrCodeContainer) {
-                    qrCodeContainer.innerHTML = `<img src="${data.qr_code_url}" alt="QR Code" />`;
-                }
-            }
-        }
-        loadQRCode();
-
-        // Listen for auth state changes
-        const authListener = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') {
-                navigate('/');
-            }
-        });
-        return () => {
-            if (authListener && typeof authListener.unsubscribe === 'function') {
-                authListener.unsubscribe();
+                setLoading(false);
             }
         };
+
+        fetchData();
     }, [navigate]);
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, [user]);
-
-    const fetchDashboardData = async () => {
-        try {
-            setLoading(true);
-            
-            // Fetch all relevant data
-            const [
-                { data: vitals, error: vitalsError },
-                { data: medications, error: medicationsError },
-                { data: appointments, error: appointmentsError },
-                { data: conditions, error: conditionsError },
-                { data: alerts, error: alertsError }
-            ] = await Promise.all([
-                supabase.from('vitals').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7),
-                supabase.from('medications').select('*').eq('user_id', user.id),
-                supabase.from('appointments').select('*').eq('user_id', user.id).order('date', { ascending: true }).limit(5),
-                supabase.from('conditions').select('*').eq('user_id', user.id),
-                supabase.from('alerts').select('*').eq('user_id', user.id).eq('status', 'active')
-            ]);
-
-            if (vitalsError) throw vitalsError;
-            if (medicationsError) throw medicationsError;
-            if (appointmentsError) throw appointmentsError;
-            if (conditionsError) throw conditionsError;
-            if (alertsError) throw alertsError;
-
-            setHealthData({
-                vitals: vitals || [],
-                medications: medications || [],
-                appointments: appointments || [],
-                conditions: conditions || [],
-                alerts: alerts || []
-            });
-
-        } catch (error) {
-            console.error('Error fetching dashboard data:', error);
-            setError('Failed to load dashboard data');
-        } finally {
-            setLoading(false);
+    const mainFeatureCards = [
+        {
+            title: 'Profile',
+            icon: 'fa-user',
+            description: 'View and manage your profile information',
+            link: '/profile',
+            color: 'primary'
+        },
+        {
+            title: 'Health Records',
+            icon: 'fa-file-medical',
+            description: 'Access your health records and history',
+            link: '/health-records',
+            color: 'info'
+        },
+        {
+            title: 'Appointments',
+            icon: 'fa-calendar-check',
+            description: 'Schedule and manage appointments',
+            link: '/appointments',
+            color: 'success'
+        },
+        {
+            title: 'Medications',
+            icon: 'fa-pills',
+            description: 'Track your medications and prescriptions',
+            link: '/medications',
+            color: 'warning'
         }
-    };
+    ];
 
-    if (loading) {
-        return <Spinner />; // Show spinner while loading
-    }
+    const aiFeatureCards = [
+        {
+            title: 'Health Recommendations',
+            icon: 'fa-chart-line',
+            description: 'AI-powered health recommendations based on your profile',
+            link: '/ai/health-recommendations',
+            color: 'primary'
+        },
+        {
+            title: 'Medical Image Analysis',
+            icon: 'fa-microscope',
+            description: 'AI analysis of medical images',
+            link: '/ai/image-analysis',
+            color: 'info'
+        },
+        {
+            title: 'Health Assistant',
+            icon: 'fa-robot',
+            description: 'Chat with our AI health assistant',
+            link: '/ai/health-assistant',
+            color: 'success'
+        },
+        {
+            title: 'Symptom Checker',
+            icon: 'fa-stethoscope',
+            description: 'AI-powered symptom analysis',
+            link: '/ai/symptom-checker',
+            color: 'danger'
+        }
+    ];
+
+    if (loading) return <Spinner />;
+    if (error) return <div className="alert alert-danger">{error}</div>;
 
     return (
-        <div id="dashboard">
-            {/* Navigation Menu is provided by Navbar in Layout */}
-            <br /><br />
-            <div className="container">
-                {/* Notification Container */}
-                {notification && (
-                    <div className={`alert alert-${notification.type} alert-dismissible fade show`} role="alert">
-                        {notification.message}
-                    </div>
-                )}
-
-                {/* Welcome Message */}
-                <div className="home-header">
-                    <h1>Welcome to Your Digital Health Passport</h1>
-                    <p>Your health, managed smarter and more securely.</p>
-                    <p className="user-welcome">
-                        Hello, <span id="user-name"></span>. Here's what's happening today.
-                    </p>
+        <div className="dashboard container-fluid py-4" >
+            <div className="row mb-4">
+                <div className="col">
+                    <h1 className="h3">Welcome, {healthData.profile?.first_name || 'User'}!</h1>
+                    <p className="text-muted">Here's an overview of your health information</p>
                 </div>
+            </div>
 
-                {/* Dashboard Cards Section */}
-                <div className="home-cards">
-                    <div className="card" id="upcoming-appointments-card">
-                        <div className="icon"><FaCalendarAlt /></div>
-                        <div className="content">
-                            <h3>Upcoming Appointments</h3>
-                            <p>View and manage your appointments effortlessly.</p>
-                            <Link to="/appointments" className="action-link">View Details</Link>
-                        </div>
+            {/* Main Features Section */}
+            <div className="row mb-4"></div>
+            <h4 className="mb-3">Main Features</h4>
+            <div className="row g-4 mb-5">
+                {mainFeatureCards.map((card, index) => (
+                    <div key={index} className="col-12 col-md-6 col-lg-3">
+                        <Link to={card.link} className="text-decoration-none">
+                            <div className={`card h-100 border-${card.color} shadow-sm hover-card`}>
+                                <div className="card-body">
+                                    <div className="d-flex align-items-center mb-3">
+                                        <div className={`icon-circle bg-${card.color} text-white`}>
+                                            <i className={`fas ${card.icon}`}></i>
+                                        </div>
+                                        <h5 className="card-title mb-0 ms-3">{card.title}</h5>
+                                    </div>
+                                    <p className="card-text text-muted">{card.description}</p>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
-                    {/* Other cards (vaccination records, health records, etc.) */}
-                    <div className="card" id="qrCodeCard">
-                        <div className="icon"><FaQrcode /></div>
-                        <div className="content">
-                            <h3>Emergency Contact QR Code</h3>
-                            <p>Your emergency contact QR code.</p>
-                        </div>
+                ))}
+            </div>
+
+            {/* AI Features Section */}
+            <h4 className="mb-3">AI-Powered Features</h4>
+            <div className="row g-4 mb-5">
+                {aiFeatureCards.map((card, index) => (
+                    <div key={index} className="col-12 col-md-6 col-lg-3">
+                        <Link to={card.link} className="text-decoration-none">
+                            <div className={`card h-100 border-${card.color} shadow-sm hover-card`}>
+                                <div className="card-body">
+                                    <div className="d-flex align-items-center mb-3">
+                                        <div className={`icon-circle bg-${card.color} text-white`}>
+                                            <i className={`fas ${card.icon}`}></i>
+                                        </div>
+                                        <h5 className="card-title mb-0 ms-3">{card.title}</h5>
+                                    </div>
+                                    <p className="card-text text-muted">{card.description}</p>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
-                    <div className="card" id="vaccination-records-card">
-                        <div className="icon"><FaSyringe /></div>
-                        <div className="content">
-                            <h3>Vaccination Records</h3>
-                            <p>Track and update your vaccination history.</p>
-                            <Link to="/vaccinations" className="action-link">View Details</Link>
-                        </div>
-                    </div>
-                    <div className="card" id="health-records-card">
-                        <div className="icon"><FaFileMedical /></div>
-                        <div className="content">
-                            <h3>Health Records</h3>
-                            <p>Access all your health records in one place.</p>
-                            <Link to="/health-records" className="action-link">View Details</Link>
-                        </div>
-                    </div>
-                    <div className="card" id="doctor-consultations-card">
-                        <div className="icon"><FaStethoscope /></div>
-                        <div className="content">
-                            <h3>Doctor Consultations</h3>
-                            <p>Review past doctor consultations and notes.</p>
-                            <Link to="/consultations" className="action-link">View Details</Link>
-                        </div>
-                    </div>
-                    <div className="card" id="medication-history-card">
-                        <div className="icon"><FaPills /></div>
-                        <div className="content">
-                            <h3>Medication History</h3>
-                            <p>Keep track of your medications and prescriptions.</p>
-                            <Link to="/medications" className="action-link">View Details</Link>
-                        </div>
-                    </div>
-                    <div className="card" id="bone-health-card">
-                        <div className="icon"><FaBone /></div>
-                        <div className="content">
-                            <h3>Bone Health</h3>
-                            <p>Monitor your bone health status and treatments.</p>
-                            <Link to="/bone-health" className="action-link">View Details</Link>
-                        </div>
-                    </div>
-                    <div className="card" id="emergency-contacts-card">
-                        <div className="icon"><FaAmbulance /></div>
-                        <div className="content">
-                            <h3>Emergency Contacts</h3>
-                            <p>Update and view your emergency contact details.</p>
-                            <Link to="/emergency-contacts" className="action-link">View Details</Link>
+                ))}
+            </div>
+
+            {/* Quick Actions Section */}
+            <div className="row mt-4">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="card-body">
+                            <h5 className="card-title">Quick Actions</h5>
+                            <div className="row g-2">
+                                <div className="col-6 col-md-3">
+                                    <Link to="/appointments/new" className="btn btn-outline-primary w-100">
+                                        <i className="fas fa-plus-circle me-2"></i>
+                                        New Appointment
+                                    </Link>
+                                </div>
+                                <div className="col-6 col-md-3">
+                                    <Link to="/medications/add" className="btn btn-outline-success w-100">
+                                        <i className="fas fa-pills me-2"></i>
+                                        Add Medication
+                                    </Link>
+                                </div>
+                                <div className="col-6 col-md-3">
+                                    <Link to="/reports/upload" className="btn btn-outline-info w-100">
+                                        <i className="fas fa-upload me-2"></i>
+                                        Upload Report
+                                    </Link>
+                                </div>
+                                <div className="col-6 col-md-3">
+                                    <Link to="/ai/health-assistant" className="btn btn-outline-danger w-100">
+                                        <i className="fas fa-robot me-2"></i>
+                                        AI Assistant
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div id="main-content"></div>
-            <div className="overlay"></div>
         </div>
     );
 };

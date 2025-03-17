@@ -42,14 +42,18 @@ const DataBackup = () => {
       // Fetch all user data
       const [
         { data: profile },
-        { data: healthData },
+        { data: healthMetrics },
         { data: appointments },
-        { data: medications }
+        { data: medications },
+        { data: medicalConditions },
+        { data: healthAlerts }
       ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('health_data').select('*').eq('user_id', user.id),
+        supabase.from('health_metrics').select('*').eq('user_id', user.id),
         supabase.from('appointments').select('*').eq('user_id', user.id),
-        supabase.from('medications').select('*').eq('user_id', user.id)
+        supabase.from('medications').select('*').eq('user_id', user.id),
+        supabase.from('medical_conditions').select('*').eq('user_id', user.id),
+        supabase.from('health_alerts').select('*').eq('user_id', user.id)
       ]);
 
       // Create backup record
@@ -60,7 +64,15 @@ const DataBackup = () => {
             user_id: user.id,
             type: 'export',
             status: 'completed',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            backup_data: {
+              profile,
+              healthMetrics,
+              appointments,
+              medications,
+              medicalConditions,
+              healthAlerts
+            }
           }
         ])
         .select()
@@ -71,9 +83,11 @@ const DataBackup = () => {
       // Create downloadable file
       const backupData = {
         profile,
-        healthData,
+        healthMetrics,
         appointments,
         medications,
+        medicalConditions,
+        healthAlerts,
         exportDate: new Date().toISOString()
       };
 
@@ -136,10 +150,10 @@ const DataBackup = () => {
               .upsert({ ...backupData.profile, id: user.id });
           }
 
-          if (backupData.healthData) {
+          if (backupData.healthMetrics) {
             await supabase
-              .from('health_data')
-              .upsert(backupData.healthData.map(data => ({ ...data, user_id: user.id })));
+              .from('health_metrics')
+              .upsert(backupData.healthMetrics.map(data => ({ ...data, user_id: user.id })));
           }
 
           if (backupData.appointments) {
@@ -152,6 +166,18 @@ const DataBackup = () => {
             await supabase
               .from('medications')
               .upsert(backupData.medications.map(med => ({ ...med, user_id: user.id })));
+          }
+
+          if (backupData.medicalConditions) {
+            await supabase
+              .from('medical_conditions')
+              .upsert(backupData.medicalConditions.map(cond => ({ ...cond, user_id: user.id })));
+          }
+
+          if (backupData.healthAlerts) {
+            await supabase
+              .from('health_alerts')
+              .upsert(backupData.healthAlerts.map(alert => ({ ...alert, user_id: user.id })));
           }
 
           setSuccess('Data imported successfully');

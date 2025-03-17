@@ -265,6 +265,55 @@ const Navbar = () => {
           </div>
         </div>
       </div>  
+
+      {/* Add a new menu item for AI features */}
+      <div className="menu-item">
+        <div className="menu-text">
+          <a href="#" data-link>AI Tools</a>
+        </div>
+        <div className="sub-menu double">
+          <div className="icon-box" id="ai-image-analysis" onClick={(e) => {
+            e.preventDefault();
+            navigate('/ai/image-analysis');
+          }}>
+            <div className="icon"><i className="fa fa-microscope"></i></div>
+            <div className="text">
+              <div className="title">Medical Image Analysis</div>
+              <div className="sub-text">AI analysis of medical images</div>
+            </div>
+          </div>
+          <div className="icon-box" id="ai-health-assistant" onClick={(e) => {
+            e.preventDefault();
+            navigate('/ai/health-assistant');
+          }}>
+            <div className="icon"><i className="fa fa-robot"></i></div>
+            <div className="text">
+              <div className="title">Health Assistant</div>
+              <div className="sub-text">Chat with our AI assistant</div>
+            </div>
+          </div>
+          <div className="icon-box" id="ai-recommendations" onClick={(e) => {
+            e.preventDefault();
+            navigate('/ai/health-recommendations');
+          }}>
+            <div className="icon"><i className="fa fa-lightbulb"></i></div>
+            <div className="text">
+              <div className="title">Health Recommendations</div>
+              <div className="sub-text">Get personalized AI recommendations</div>
+            </div>
+          </div>
+          <div className="icon-box" id="ai-symptom-checker" onClick={(e) => {
+            e.preventDefault();
+            navigate('/ai/symptom-checker');
+          }}>
+            <div className="icon"><i className="fa fa-stethoscope"></i></div>
+            <div className="text">
+              <div className="title">Symptom Checker</div>
+              <div className="sub-text">AI analysis of symptoms</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };

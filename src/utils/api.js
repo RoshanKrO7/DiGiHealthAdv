@@ -23,7 +23,9 @@ export const updateUserProfile = async (profile) => {
 
   const { data, error } = await supabase
     .from('detailed_profiles')
-    .upsert({ ...profile, id: user.id });
+    .upsert({ ...profile, id: user.id })
+    .select('*')
+    .single();
 
   if (error) throw error;
   return data;
@@ -34,12 +36,12 @@ export const getDiseaseNames = async () => {
   if (!user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
-    .from('diseases')
-    .select('*')
+    .from('user_diseases')
+    .select('disease_name, id')
     .eq('user_id', user.id);
 
   if (error) throw error;
-  return data.map(disease => disease.name);
+  return data;
 };
 
 export const addDiseaseName = async (diseaseName) => {
@@ -47,11 +49,16 @@ export const addDiseaseName = async (diseaseName) => {
   if (!user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
-    .from('diseases')
-    .insert([{ name: diseaseName, user_id: user.id }]);
+    .from('user_diseases')
+    .insert([{ 
+      disease_name: diseaseName, 
+      user_id: user.id,
+      created_at: new Date().toISOString()
+    }])
+    .select();
 
   if (error) throw error;
-  return data;
+  return data[0];
 };
 
 export const getParameters = async () => {
@@ -59,21 +66,68 @@ export const getParameters = async () => {
   if (!user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
-    .from('parameters')
-    .select('*')
+    .from('health_parameters')
+    .select('parameter_name, value, id')
     .eq('user_id', user.id);
 
   if (error) throw error;
-  return data.map(param => param.name);
+  return data;
 };
 
-export const addParameter = async (parameter) => {
+export const addParameter = async (parameterData) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
-    .from('parameters')
-    .insert([{ name: parameter, user_id: user.id }]);
+    .from('health_parameters')
+    .insert([{ 
+      parameter_name: parameterData.name,
+      value: parameterData.value,
+      user_id: user.id,
+      created_at: new Date().toISOString()
+    }])
+    .select();
+
+  if (error) throw error;
+  return data[0];
+};
+
+export const getAllergies = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('user_allergies')
+    .select('allergy_name, severity, id')
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+  return data;
+};
+
+export const addAllergy = async (allergyData) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('user_allergies')
+    .insert([{ 
+      allergy_name: allergyData.name,
+      severity: allergyData.severity,
+      user_id: user.id,
+      created_at: new Date().toISOString()
+    }])
+    .select();
+
+  if (error) throw error;
+  return data[0];
+};
+
+export const getCommonDiseases = async () => {
+  const { data, error } = await supabase
+    .from('common_diseases')
+    .select('name, category')
+    .order('category', { ascending: true });
 
   if (error) throw error;
   return data;
