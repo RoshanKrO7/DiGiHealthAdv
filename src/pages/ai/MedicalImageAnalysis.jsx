@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../../utils/supabaseClient'; // Make sure this path is correct
 import Spinner from '../../components/Spinner'; // Make sure this path is correct
-import { openai, MODELS } from '../../utils/openai';
+import { callOpenAI, MODELS } from '../../utils/openai';
 import './MedicalImageAnalysis.css';
 
 const MedicalImageAnalysis = () => {
@@ -85,38 +85,42 @@ const MedicalImageAnalysis = () => {
         const base64Image = reader.result;
         
         try {
-          // Call OpenAI Vision API
-          const response = await openai.chat.completions.create({
-            model: MODELS.GPT4_VISION,
-            messages: [
-              {
-                role: 'system',
-                content: getAnalysisPrompt(analysisType)
-              },
-              {
-                role: 'user',
-                content: [
-                  { type: 'text', text: 'Please analyze this medical image.' },
-                  { type: 'image_url', image_url: { url: base64Image } }
-                ]
-              }
-            ],
-            max_tokens: 1000,
+          // Create a prompt for image analysis
+          const prompt = `
+            You are a medical imaging specialist AI. Analyze this medical image and provide detailed observations.
+            ${getAnalysisPrompt(analysisType)}
+            
+            Please provide your analysis in this format:
+            {
+              "findings": [list of key findings],
+              "interpretation": [detailed analysis],
+              "recommendations": [any recommended follow-ups],
+              "differential_diagnosis": [possible conditions to consider]
+            }
+          `;
+
+          // Call your backend API instead of OpenAI directly
+          const result = await callOpenAI(prompt, {
+            imageUrl: base64Image,
+            analysisType: analysisType,
+            isImageAnalysis: true
           });
           
           // Save results
           setResults({
-            analysis: response.choices[0].message.content,
+            analysis: result.interpretation || result,
+            findings: result.findings || [],
+            recommendations: result.recommendations || [],
             date: new Date().toISOString(),
             disclaimer: getDisclaimer(analysisType),
             imageType: analysisType
           });
           
           // Save analysis to database
-          saveAnalysisToDatabase(response.choices[0].message.content);
+          saveAnalysisToDatabase(result.interpretation || result);
           
         } catch (apiError) {
-          console.error('OpenAI API error:', apiError);
+          console.error('API error:', apiError);
           setError('Error analyzing image. Please try again or use a different image.');
         }
         

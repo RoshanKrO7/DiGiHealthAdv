@@ -3,12 +3,6 @@ import { Modal, Button, Form, Card, Container, Row, Col } from 'react-bootstrap'
 import { supabase } from '../utils/main';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import * as pdfjsLib from 'pdfjs-dist';
-import Tesseract from 'tesseract.js';
-import { pdfjs } from 'react-pdf';
-
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 const HealthOverview = () => {
   const [healthData, setHealthData] = useState([]);
@@ -85,151 +79,56 @@ const HealthOverview = () => {
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    setNewReport({ ...newReport, file });
+    if (!file) return;
     
-    if (file) {
+    setNewReport({ ...newReport, file });
+    setLoading(true);
+    
+    try {
+      // Show preview for image files
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => setPreview(reader.result);
         reader.readAsDataURL(file);
-      }
-
-      // Extract parameters from the file
-      try {
-        const extractedData = await extractParametersFromFile(file);
-        setExtractedParameters(extractedData);
-      } catch (error) {
-        console.error('Error extracting parameters:', error);
-        setNotification({ message: 'Error extracting parameters from file', type: 'danger' });
-      }
-    }
-  };
-
-  const extractParametersFromFile = async (file) => {
-    try {
-      let text = '';
-      
-      // Your existing code to extract text from different file types
-      if (file.type.startsWith('image/')) {
-        const { data: { text: extractedText } } = await Tesseract.recognize(
-          URL.createObjectURL(file),
-          'eng',
-          { logger: m => console.log(m) }
-        );
-        text = extractedText;
-      } else if (file.type === 'application/pdf') {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        
-        // Process each page
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          
-          // Try to get text content first (for native PDFs)
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          
-          // If page has very little text, it might be a scanned page
-          // In that case, render it and use OCR
-          if (pageText.trim().length < 100) {
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            await page.render({
-              canvasContext: context,
-              viewport: viewport
-            }).promise;
-            
-            const { data: { text: ocrText } } = await Tesseract.recognize(
-              canvas.toDataURL('image/png'),
-              'eng',
-              { logger: m => console.log(m) }
-            );
-            text += ocrText + '\n';
-          } else {
-            text += pageText + '\n';
-          }
-        }
       } else {
-        text = await file.text();
+        setPreview(null);
       }
-
-      // Your existing regex extraction
-      const extractedData = {};
-      userParameters.forEach(param => {
-        const pattern = new RegExp(`${param.parameter_name}\\s*[:=]\\s*([\\d.]+)`, 'i');
-        const match = text.match(pattern);
-        if (match) {
-          extractedData[param.parameter_name] = match[1];
-        }
-      });
-
-      // Enhance with OpenAI if the text has sufficient content
-      if (text.length > 50) {
-        const enhancedResult = await enhanceWithOpenAI(text, extractedData);
-        return enhancedResult;
-      }
-
-      return { parameters: extractedData };
-    } catch (error) {
-      console.error('Error extracting parameters:', error);
-      throw error;
-    }
-  };
-
-  const enhanceWithOpenAI = async (text, extractedParams) => {
-    try {
-      // Create a system prompt
-      const prompt = `
-        You are a medical data extraction assistant. Extract relevant health parameters from the following medical report.
-        If you find any of these parameters, provide their values: blood pressure, heart rate, cholesterol, glucose, BMI, A1C, triglycerides, HDL, LDL.
-        Also identify any mentioned medical conditions, medications, or doctor's recommendations.
-        
-        Document text:
-        ${text}
-      `;
-
-      // Call your backend API instead of OpenAI directly
-      const response = await fetch('http://localhost:3001/api/analyze-report', {
+      
+      // Create a FormData object to send the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Send to backend for processing
+      const response = await fetch('https://digihealth-backend.onrender.com/api/process-file', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: prompt })
+        body: formData,
       });
       
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error processing file');
       }
       
-      // Parse the response
       const result = await response.json();
+      setExtractedParameters(result);
       
-      // Merge with regex-extracted parameters
-      const enhancedParams = {
-        ...extractedParams,
-        ...result.parameters
-      };
+      // Show success notification
+      setNotification({
+        message: 'File processed successfully. Review the extracted information below.',
+        type: 'success'
+      });
       
-      return {
-        parameters: enhancedParams,
-        aiAnalysis: {
-          conditions: result.conditions || [],
-          medications: result.medications || [],
-          recommendations: result.recommendations || [],
-          summary: result.summary || ""
-        }
-      };
     } catch (error) {
-      console.error('Error enhancing with OpenAI:', error);
-      return { parameters: extractedParams, aiAnalysis: null };
+      console.error('Error processing file:', error);
+      setNotification({
+        message: `Error processing file: ${error.message}`,
+        type: 'danger'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Update your handleSubmit function to store AI analysis
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -254,7 +153,7 @@ const HealthOverview = () => {
         .from('healthrecords')
         .insert([{
           user_id: userId,
-          disease_id: newReport.disease_id,  // If you named the column 'disease_id'
+          disease_id: newReport.disease_id,
           since: newReport.since,
           document_url: publicUrl,
           created_at: new Date().toISOString(),
@@ -265,42 +164,44 @@ const HealthOverview = () => {
   
       if (reportError) throw reportError;
   
-      // Save extracted parameters
+      // Save extracted parameters if any
       if (extractedParameters.parameters && Object.keys(extractedParameters.parameters).length > 0) {
-        const parameterRecords = Object.entries(extractedParameters.parameters).map(([name, value]) => ({
-          report_id: reportData.id,
-          parameter_name: name,
-          parameter_value: value
-        }));
-  
         const { error: paramError } = await supabase
-          .from('report_parameters')
-          .insert(parameterRecords);
+          .from('health_parameters')
+          .insert(
+            Object.entries(extractedParameters.parameters).map(([key, value]) => ({
+              user_id: userId,
+              record_id: reportData.id,
+              parameter_name: key,
+              parameter_value: value,
+              created_at: new Date().toISOString()
+            }))
+          );
   
-        if (paramError) throw paramError;
+        if (paramError) console.error('Error saving parameters:', paramError);
       }
+  
+      // Refresh data
+      fetchHealthData();
       
-      // If we have AI analysis, save it too
-      if (extractedParameters.aiAnalysis) {
-        const { error: aiError } = await supabase
-          .from('report_ai_analysis')
-          .insert([{
-            report_id: reportData.id,  // This should now be a UUID, not an integer
-            conditions: extractedParameters.aiAnalysis.conditions,
-            medications: extractedParameters.aiAnalysis.medications,
-            recommendations: extractedParameters.aiAnalysis.recommendations,
-            summary: extractedParameters.aiAnalysis.summary
-          }]);
-          
-        if (aiError) throw aiError;
-      }
-  
-      setNotification({ message: 'Report uploaded successfully!', type: 'success' });
+      // Reset form
       setShowModal(false);
-      fetchHealthData(userId);
+      setNewReport({ disease_id: '', since: '', file: null });
+      setPreview(null);
+      setExtractedParameters({});
+      
+      // Show success notification
+      setNotification({
+        message: 'Report uploaded successfully!',
+        type: 'success'
+      });
+      
     } catch (error) {
       console.error('Error uploading report:', error);
-      setNotification({ message: 'Error uploading report', type: 'danger' });
+      setNotification({
+        message: `Error uploading report: ${error.message}`,
+        type: 'danger'
+      });
     } finally {
       setLoading(false);
     }
