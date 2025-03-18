@@ -5,16 +5,10 @@ import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import * as pdfjsLib from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
-import OpenAI from 'openai';
+import { pdfjs } from 'react-pdf';
 
 // Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-// Initialize the OpenAI client (near the top of your file with other imports)
-const openai = new OpenAI({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY, // Store this in your .env file
-  dangerouslyAllowBrowser: true // For client-side usage (consider moving to backend in production)
-});
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 const HealthOverview = () => {
   const [healthData, setHealthData] = useState([]);
@@ -186,10 +180,9 @@ const HealthOverview = () => {
     }
   };
 
-  // Add this new function to your component
   const enhanceWithOpenAI = async (text, extractedParams) => {
     try {
-      // Create a system prompt for health data extraction
+      // Create a system prompt
       const prompt = `
         You are a medical data extraction assistant. Extract relevant health parameters from the following medical report.
         If you find any of these parameters, provide their values: blood pressure, heart rate, cholesterol, glucose, BMI, A1C, triglycerides, HDL, LDL.
@@ -197,30 +190,25 @@ const HealthOverview = () => {
         
         Document text:
         ${text}
-        
-        Format your response as a JSON object with these keys:
-        "parameters" (key-value pairs of parameter names and values)
-        "conditions" (array of identified conditions)
-        "medications" (array of medications with dosages if available)
-        "recommendations" (key points from doctor's recommendations)
-        "summary" (2-3 sentence summary of the document)
       `;
 
-      // Call OpenAI API
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: "You are a medical data extraction assistant that outputs only valid JSON." },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2
+      // Call your backend API instead of OpenAI directly
+      const response = await fetch('http://localhost:3001/api/analyze-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: prompt })
       });
-
-      // Parse the response
-      const result = JSON.parse(response.choices[0].message.content);
       
-      // Merge with regex-extracted parameters (prioritizing OpenAI for conflicts)
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+      
+      // Parse the response
+      const result = await response.json();
+      
+      // Merge with regex-extracted parameters
       const enhancedParams = {
         ...extractedParams,
         ...result.parameters
@@ -237,7 +225,6 @@ const HealthOverview = () => {
       };
     } catch (error) {
       console.error('Error enhancing with OpenAI:', error);
-      // Return original extracted params if OpenAI enhancement fails
       return { parameters: extractedParams, aiAnalysis: null };
     }
   };
@@ -267,7 +254,7 @@ const HealthOverview = () => {
         .from('healthrecords')
         .insert([{
           user_id: userId,
-          disease_id: newReport.disease_id,
+          disease_id: newReport.disease_id,  // If you named the column 'disease_id'
           since: newReport.since,
           document_url: publicUrl,
           created_at: new Date().toISOString(),
