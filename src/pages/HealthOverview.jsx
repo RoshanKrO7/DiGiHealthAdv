@@ -4,6 +4,14 @@ import { supabase } from '../utils/main';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+const styles = {
+  actionButton: {
+    display: 'inline-block',
+    opacity: 1,
+    visibility: 'visible'
+  }
+};
+
 const HealthOverview = () => {
   const [healthData, setHealthData] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -20,6 +28,10 @@ const HealthOverview = () => {
   const [userDiseases, setUserDiseases] = useState([]);
   const [userParameters, setUserParameters] = useState([]);
   const [extractedParameters, setExtractedParameters] = useState({});
+
+  // Add these state variables for confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -180,6 +192,49 @@ const HealthOverview = () => {
   
         if (paramError) console.error('Error saving parameters:', paramError);
       }
+
+      // Save conditions if any
+      if (extractedParameters.aiAnalysis?.conditions?.length > 0) {
+        const { error: condError } = await supabase
+          .from('report_conditions')
+          .insert(
+            extractedParameters.aiAnalysis.conditions.map(condition => ({
+              record_id: reportData.id,
+              condition_name: condition,
+              created_at: new Date().toISOString()
+            }))
+          );
+      
+        if (condError) console.error('Error saving conditions:', condError);
+      }
+      
+      // Save medications if any
+      if (extractedParameters.aiAnalysis?.medications?.length > 0) {
+        const { error: medError } = await supabase
+          .from('report_medications')
+          .insert(
+            extractedParameters.aiAnalysis.medications.map(medication => ({
+              record_id: reportData.id,
+              medication_name: medication,
+              created_at: new Date().toISOString()
+            }))
+          );
+      
+        if (medError) console.error('Error saving medications:', medError);
+      }
+      
+      // Save recommendations if any
+      if (extractedParameters.aiAnalysis?.recommendations) {
+        const { error: recError } = await supabase
+          .from('report_recommendations')
+          .insert([{
+            record_id: reportData.id,
+            recommendation_text: extractedParameters.aiAnalysis.recommendations,
+            created_at: new Date().toISOString()
+          }]);
+      
+        if (recError) console.error('Error saving recommendations:', recError);
+      }
   
       // Refresh data
       fetchHealthData();
@@ -207,6 +262,71 @@ const HealthOverview = () => {
     }
   };
 
+  // Add these functions to your component
+  const handleDeleteReport = (reportId) => {
+    setReportToDelete(reportId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    try {
+      // First, get the report details to find related resources
+      const { data: report, error: fetchError } = await supabase
+        .from('healthrecords')
+        .select('*')
+        .eq('id', reportToDelete)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Delete related data first (due to foreign key constraints)
+      await Promise.all([
+        supabase.from('health_parameters').delete().eq('record_id', reportToDelete),
+        supabase.from('report_conditions').delete().eq('record_id', reportToDelete),
+        supabase.from('report_medications').delete().eq('record_id', reportToDelete),
+        supabase.from('report_recommendations').delete().eq('record_id', reportToDelete),
+        supabase.from('report_ai_analysis').delete().eq('report_id', reportToDelete)
+      ]);
+      
+      // Delete the storage file if it exists
+      if (report.document_url) {
+        const filePath = report.document_url.split('/').pop();
+        const { error: storageError } = await supabase.storage
+          .from('health-reports')
+          .remove([`${userId}/${filePath}`]);
+        
+        if (storageError) console.error('Error deleting file:', storageError);
+      }
+      
+      // Finally delete the report record
+      const { error: deleteError } = await supabase
+        .from('healthrecords')
+        .delete()
+        .eq('id', reportToDelete);
+      
+      if (deleteError) throw deleteError;
+      
+      // Update UI
+      setHealthData(healthData.filter(report => report.id !== reportToDelete));
+      
+      setNotification({
+        message: 'Report deleted successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      setNotification({
+        message: `Error deleting report: ${error.message}`,
+        type: 'danger'
+      });
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setReportToDelete(null);
+    }
+  };
+
   return (
     <Container className="py-4">
       {loading && <Spinner />}
@@ -228,8 +348,24 @@ const HealthOverview = () => {
                 <Card.Title>Disease: {report.user_diseases?.disease_name}</Card.Title>
                 <Card.Text>Since: {report.since}</Card.Text>
                 <div className="d-flex justify-content-between">
-                  <Button variant="danger" size="md" className='m-2' onClick={() => console.log('Delete', report.id)}>Delete</Button>
-                  <Button variant="info" size="md" className='m-2' onClick={() => window.open(report.document_url, '_blank')}>View</Button>
+                  <Button 
+                    variant="danger" 
+                    size="md" 
+                    className='m-2' 
+                    style={styles.actionButton}
+                    onClick={() => handleDeleteReport(report.id)}
+                  >
+                    Delete
+                  </Button>
+                  <Button 
+                    variant="info" 
+                    size="md" 
+                    className='m-2' 
+                    style={styles.actionButton}
+                    onClick={() => window.open(report.document_url, '_blank')}
+                  >
+                    View
+                  </Button>
                 </div>
               </Card.Body>
             </Card>
@@ -338,6 +474,23 @@ const HealthOverview = () => {
               {loading ? 'Uploading...' : 'Upload Report'}
             </Button>
           </Form>
+        </Modal.Body>
+      </Modal>
+
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to delete this report?</p>
+          <div className="d-flex justify-content-end">
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="me-2">
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </div>
         </Modal.Body>
       </Modal>
     </Container>

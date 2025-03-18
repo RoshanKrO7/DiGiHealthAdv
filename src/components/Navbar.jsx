@@ -220,52 +220,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      <div className="menu-item">
-        <div className="menu-text">
-          <a href="#" data-link>Account</a>
-        </div>
-        <div className="sub-menu double">
-          <div className="icon-box" id="profile-settings" onClick={handleMenuClick}>
-            <div className="icon"><i className="fa fa-user-cog"></i></div>
-            <div className="text">
-              <div className="title">Profile Settings</div>
-              <div className="sub-text">Edit your personal details</div>
-            </div>
-          </div>
-          <div className="icon-box" id="security-settings" onClick={handleMenuClick}>
-            <div className="icon"><i className="fa fa-lock"></i></div>
-            <div className="text">
-              <div className="title">Security Settings</div>
-              <div className="sub-text">Manage passwords and 2FA</div>
-            </div>
-          </div>
-          <div className="icon-box" id="data-backup" onClick={handleMenuClick}>
-            <div className="icon"><i className="fa fa-download"></i></div>
-            <div className="text">
-              <div className="title">Data Backup & Export</div>
-              <div className="sub-text">Backup and download your data</div>
-            </div>
-          </div>
-          {isAdmin && (
-            <div className="icon-box" id="database-setup" onClick={handleMenuClick}>
-              <div className="icon"><i className="fa fa-database"></i></div>
-              <div className="text">
-                <div className="title">Database Setup</div>
-                <div className="sub-text">Reset and setup database tables</div>
-              </div>
-            </div>
-          )}
-          <div className="icon-box" id="logout-div" onClick={handleMenuClick}>
-            <div className="icon"><i className="fa-solid fa-arrow-right-from-bracket"></i></div>
-            <div className="text">
-              <div className="title">Logout</div>
-              <div className="sub-text">Logout your account</div>
-            </div>
-          </div>
-        </div>
-      </div>  
-
       {/* Add a new menu item for AI features */}
       <div className="menu-item">
         <div className="menu-text">
@@ -314,6 +268,51 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      <div className="menu-item">
+        <div className="menu-text">
+          <a href="#" data-link>Account</a>
+        </div>
+        <div className="sub-menu double">
+          <div className="icon-box" id="profile-settings" onClick={handleMenuClick}>
+            <div className="icon"><i className="fa fa-user-cog"></i></div>
+            <div className="text">
+              <div className="title">Profile Settings</div>
+              <div className="sub-text">Edit your personal details</div>
+            </div>
+          </div>
+          <div className="icon-box" id="security-settings" onClick={handleMenuClick}>
+            <div className="icon"><i className="fa fa-lock"></i></div>
+            <div className="text">
+              <div className="title">Security Settings</div>
+              <div className="sub-text">Manage passwords and 2FA</div>
+            </div>
+          </div>
+          <div className="icon-box" id="data-backup" onClick={handleMenuClick}>
+            <div className="icon"><i className="fa fa-download"></i></div>
+            <div className="text">
+              <div className="title">Data Backup & Export</div>
+              <div className="sub-text">Backup and download your data</div>
+            </div>
+          </div>
+          {isAdmin && (
+            <div className="icon-box" id="database-setup" onClick={handleMenuClick}>
+              <div className="icon"><i className="fa fa-database"></i></div>
+              <div className="text">
+                <div className="title">Database Setup</div>
+                <div className="sub-text">Reset and setup database tables</div>
+              </div>
+            </div>
+          )}
+          <div className="icon-box" id="logout-div" onClick={handleMenuClick}>
+            <div className="icon"><i className="fa-solid fa-arrow-right-from-bracket"></i></div>
+            <div className="text">
+              <div className="title">Logout</div>
+              <div className="sub-text">Logout your account</div>
+            </div>
+          </div>
+        </div>
+      </div>  
     </nav>
   );
 };

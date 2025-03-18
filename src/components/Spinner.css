@@ -4,11 +4,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  backdrop-filter: blur(3px);
 }
 
 .loader {
@@ -23,4 +24,159 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.medical-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 4px solid #e0f2fe;
+  border-radius: 50%;
+  border-top: 4px solid #0891b2;
+  animation: spinner-rotate 1.5s ease-in-out infinite;
+}
+
+.cross-container {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.cross-horizontal {
+  position: absolute;
+  top: 45%;
+  left: 15%;
+  width: 70%;
+  height: 10%;
+  background-color: #0891b2;
+  border-radius: 4px;
+}
+
+.cross-vertical {
+  position: absolute;
+  top: 15%;
+  left: 45%;
+  width: 10%;
+  height: 70%;
+  background-color: #0891b2;
+  border-radius: 4px;
+}
+
+.heartbeat-container {
+  width: 200px;
+  height: 60px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 10px;
+}
+
+.ecg-line {
+  width: 100%;
+  height: 100%;
+}
+
+.ecg-path {
+  stroke: #0891b2;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: dash 3s linear infinite;
+}
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 400;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.spinner-text {
+  color: #0891b2;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+@keyframes spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .spinner-container {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .spinner-ring {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .heartbeat-container {
+    width: 120px;
+  }
+  
+  .heartbeat-line {
+    width: 120px;
+  }
+}
+
+/* Support for dark mode */
+@media (prefers-color-scheme: dark) {
+  .spinner-overlay {
+    background-color: rgba(15, 23, 42, 0.9);
+  }
+  
+  .spinner-ring {
+    border: 4px solid #1e293b;
+    border-top: 4px solid #38bdf8;
+  }
+  
+  .cross-horizontal, .cross-vertical {
+    background-color: #38bdf8;
+  }
+  
+  .ecg-path {
+    stroke: #38bdf8;
+  }
+  
+  .spinner-text {
+    color: #38bdf8;
+  }
 }
