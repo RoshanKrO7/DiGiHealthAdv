@@ -24,6 +24,7 @@ const HealthOverview = () => {
   });
   const [preview, setPreview] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [notificationTimeout, setNotificationTimeout] = useState(null);
   const [loading, setLoading] = useState(false);
   const [userDiseases, setUserDiseases] = useState([]);
   const [userParameters, setUserParameters] = useState([]);
@@ -78,15 +79,28 @@ const HealthOverview = () => {
 
   const fetchHealthData = async (uid) => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('healthrecords')
-      .select(`
-        *,
-        user_diseases(disease_name)
-      `)
-      .eq('user_id', uid);
-    if (!error) setHealthData(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('healthrecords')
+        .select(`
+          *,
+          user_diseases(disease_name)
+        `)
+        .eq('user_id', uid);
+        
+      if (error) {
+        console.error('Error fetching health data:', error);
+        showNotification(`Error loading health data: ${error.message}`, 'danger');
+        return;
+      }
+      
+      setHealthData(data);
+    } catch (err) {
+      console.error('Exception fetching health data:', err);
+      showNotification(`Error: ${err.message}`, 'danger');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -100,10 +114,7 @@ const HealthOverview = () => {
       // Show preview for image files
       if (file.type.startsWith('image/')) {
         // Warn user that image analysis is temporarily disabled
-        setNotification({
-          message: 'Image processing is temporarily unavailable. Please use PDF files for now.',
-          type: 'warning'
-        });
+        showNotification('Image processing is temporarily unavailable. Please use PDF files for now.', 'warning');
         setLoading(false);
         return;
       } else {
@@ -114,25 +125,104 @@ const HealthOverview = () => {
       const formData = new FormData();
       formData.append('file', file);
       
+      // First, check if backend is responding with debug endpoint
+      try {
+        const debugResponse = await fetch('https://digihealth-backend.onrender.com/api/check-env');
+        if (!debugResponse.ok) {
+          console.warn('Backend environment check failed', await debugResponse.text());
+        } else {
+          const debugData = await debugResponse.json();
+          console.log('Backend environment status:', debugData);
+          
+          // Check if the OpenAI API key is missing
+          if (debugData.environment && debugData.environment.OPENAI_API_KEY === 'not set') {
+            showNotification('The AI service is currently unavailable. File upload will proceed without AI analysis.', 'warning', 10000);
+            
+            // Set default empty analysis structure
+            setExtractedParameters({
+              parameters: {},
+              aiAnalysis: {
+                conditions: [],
+                medications: [],
+                recommendations: "AI analysis unavailable. Please review the document manually.",
+                summary: "This document was uploaded but could not be analyzed by AI due to service unavailability."
+              }
+            });
+            
+            // End processing here but allow normal upload flow to continue
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (debugError) {
+        console.error('Error checking backend environment:', debugError);
+        // Continue processing, as this is just a pre-check
+      }
+      
       // Send to backend for processing
+      console.log('Sending file to backend:', file.name, file.type, file.size);
       const response = await fetch('https://digihealth-backend.onrender.com/api/process-file', {
         method: 'POST',
         body: formData,
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Backend error response:', errorData);
-        throw new Error(errorData.error || 'Error processing file');
+        let errorMessage = 'Error processing file';
+        let errorData;
+        
+        try {
+          errorData = await response.json();
+          console.error('Backend error response:', errorData);
+          errorMessage = errorData.error || errorMessage;
+          
+          // Special handling for API key issues
+          if (errorData.details && (
+              errorData.details.includes('API key') || 
+              errorData.details.includes('authentication') ||
+              errorData.details.includes('401'))
+          ) {
+            showNotification('The AI service is temporarily unavailable. Your file will be uploaded but not analyzed.', 'warning', 10000);
+            
+            // Set default empty analysis structure
+            setExtractedParameters({
+              parameters: {},
+              aiAnalysis: {
+                conditions: [],
+                medications: [],
+                recommendations: "AI analysis unavailable. Please review the document manually.",
+                summary: "This document was uploaded but could not be analyzed by AI due to service unavailability."
+              }
+            });
+            
+            // End processing here but allow normal upload flow to continue
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to parse error response', e);
+        }
+        
+        throw new Error(errorMessage);
       }
       
-      const result = await response.json();
-      console.log('Backend response:', result);
+      let result;
+      try {
+        result = await response.json();
+        console.log('Backend response:', result);
+      } catch (jsonError) {
+        console.error('Failed to parse response JSON:', jsonError);
+        throw new Error('Failed to parse server response. The file may be too large or in an unsupported format.');
+      }
 
       // Add validation for the response structure
-      if (!result || (!result.parameters && !result.aiAnalysis)) {
+      if (!result || (Object.keys(result).length === 0)) {
+        console.error('Empty response structure:', result);
+        throw new Error('Server returned an empty response');
+      }
+      
+      if (!result.parameters && !result.aiAnalysis) {
         console.error('Invalid response structure:', result);
-        throw new Error('Invalid response from server');
+        throw new Error('Server returned an invalid response structure');
       }
 
       setExtractedParameters(result);
@@ -141,33 +231,51 @@ const HealthOverview = () => {
       let message;
       if (result.parameters && Object.keys(result.parameters).length > 0) {
         message = 'File processed successfully. Review the extracted information below.';
-      } else if (result.aiAnalysis && Object.keys(result.aiAnalysis).length > 0) {
+      } else if (result.aiAnalysis && (
+        (result.aiAnalysis.summary && result.aiAnalysis.summary.length > 0) || 
+        (result.aiAnalysis.conditions && result.aiAnalysis.conditions.length > 0) ||
+        (result.aiAnalysis.medications && result.aiAnalysis.medications.length > 0) ||
+        (result.aiAnalysis.recommendations && result.aiAnalysis.recommendations.length > 0)
+      )) {
         message = 'No specific parameters were extracted, but AI analysis is available.';
       } else {
-        message = 'File processed, but no information could be extracted. You can still upload it.';
+        message = 'File processed, but limited information could be extracted. You can still upload it.';
       }
       
       // Show success notification
-      setNotification({
-        message: message,
-        type: 'success'
-      });
+      showNotification(message, 'success');
       
-      console.log('Backend response structure:', {
+      console.log('Backend response structure details:', {
         hasParameters: Boolean(result.parameters) && Object.keys(result.parameters).length > 0,
+        parametersCount: result.parameters ? Object.keys(result.parameters).length : 0,
         hasAiAnalysis: Boolean(result.aiAnalysis),
-        summaryExists: Boolean(result.aiAnalysis?.summary),
+        summaryLength: result.aiAnalysis?.summary?.length || 0,
         conditionsLength: result.aiAnalysis?.conditions?.length || 0,
         medicationsLength: result.aiAnalysis?.medications?.length || 0,
-        hasRecommendations: Boolean(result.aiAnalysis?.recommendations)
+        recommendationsLength: result.aiAnalysis?.recommendations?.length || 0
       });
 
     } catch (error) {
       console.error('Error processing file:', error);
-      setNotification({
-        message: `Error processing file: ${error.message}`,
-        type: 'danger'
-      });
+      
+      // Handle specific error cases
+      if (error.message.includes('API key') || error.message.includes('OpenAI')) {
+        showNotification('AI service is unavailable. Your file will be uploaded without analysis.', 'warning');
+        
+        // Set default empty analysis structure for upload to continue
+        setExtractedParameters({
+          parameters: {},
+          aiAnalysis: {
+            conditions: [],
+            medications: [],
+            recommendations: "AI analysis unavailable. Please review the document manually.",
+            summary: "This document was uploaded but could not be analyzed by AI due to service unavailability."
+          }
+        });
+      } else {
+        showNotification(`Error processing file: ${error.message}`, 'danger');
+        setExtractedParameters({});
+      }
     } finally {
       setLoading(false);
     }
@@ -178,107 +286,168 @@ const HealthOverview = () => {
     setLoading(true);
   
     try {
+      if (!newReport.file) {
+        throw new Error('Please select a file to upload');
+      }
+      
+      if (!newReport.disease_id) {
+        throw new Error('Please select a disease');
+      }
+      
+      if (!newReport.since) {
+        throw new Error('Please select a date');
+      }
+      
       // Upload file to Supabase Storage
       const fileExt = newReport.file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      
+      console.log('Uploading file to Supabase storage:', fileName);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('health-reports')
         .upload(fileName, newReport.file);
   
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Supabase storage upload error:', uploadError);
+        throw new Error(`Error uploading file: ${uploadError.message}`);
+      }
   
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('health-reports')
         .getPublicUrl(fileName);
+      
+      console.log('File uploaded successfully, public URL:', publicUrl);
   
       // Insert report into healthrecords
-      const { data: reportData, error: reportError } = await supabase
+      const reportData = {
+        user_id: userId,
+        disease_id: newReport.disease_id,
+        since: newReport.since,
+        document_url: publicUrl,
+        created_at: new Date().toISOString(),
+        ai_summary: extractedParameters?.aiAnalysis?.summary || null
+      };
+      
+      console.log('Inserting report data:', reportData);
+      const { data: insertedReport, error: reportError } = await supabase
         .from('healthrecords')
-        .insert([{
-          user_id: userId,
-          disease_id: newReport.disease_id,
-          since: newReport.since,
-          document_url: publicUrl,
-          created_at: new Date().toISOString(),
-          ai_summary: extractedParameters.aiAnalysis?.summary || null
-        }])
+        .insert([reportData])
         .select()
         .single();
   
-      if (reportError) throw reportError;
+      if (reportError) {
+        console.error('Error inserting report data:', reportError);
+        throw new Error(`Error saving report: ${reportError.message}`);
+      }
+      
+      console.log('Report inserted successfully:', insertedReport);
+  
+      // Only continue if we have a valid report ID
+      if (!insertedReport || !insertedReport.id) {
+        throw new Error('Failed to get report ID from database');
+      }
+      
+      let hasErrors = false;
+      let errorDetails = [];
   
       // Save extracted parameters if any
       if (extractedParameters?.parameters && Object.keys(extractedParameters.parameters).length > 0) {
+        const parameterData = Object.entries(extractedParameters.parameters).map(([key, value]) => ({
+          user_id: userId,
+          record_id: insertedReport.id,
+          parameter_name: key,
+          parameter_value: String(value || "N/A"), // Convert to string and provide default
+          created_at: new Date().toISOString()
+        }));
+        
+        console.log('Saving parameters:', parameterData.length);
         const { error: paramError } = await supabase
           .from('health_parameters')
-          .insert(
-            Object.entries(extractedParameters.parameters).map(([key, value]) => ({
-              user_id: userId,
-              record_id: reportData.id,
-              parameter_name: key,
-              parameter_value: value || "N/A", // Provide default for empty values
-              created_at: new Date().toISOString()
-            }))
-          );
+          .insert(parameterData);
       
-        if (paramError) console.error('Error saving parameters:', paramError);
+        if (paramError) {
+          console.error('Error saving parameters:', paramError);
+          hasErrors = true;
+          errorDetails.push(`Parameters: ${paramError.message}`);
+        }
       } else {
         console.log('No parameters to save');
       }
   
       // Save conditions if any
       if (extractedParameters?.aiAnalysis?.conditions?.length > 0) {
+        const conditionData = extractedParameters.aiAnalysis.conditions
+          .filter(condition => condition && condition.trim()) // Filter out empty strings
+          .map(condition => ({
+            record_id: insertedReport.id,
+            condition_name: condition.trim(),
+            user_id: userId,
+            created_at: new Date().toISOString()
+          }));
+        
+        console.log('Saving conditions:', conditionData.length);
         const { error: condError } = await supabase
           .from('report_conditions')
-          .insert(
-            extractedParameters.aiAnalysis.conditions.map(condition => ({
-              record_id: reportData.id,
-              condition_name: condition,
-              user_id: userId, // Add this line
-              created_at: new Date().toISOString()
-            }))
-          );
+          .insert(conditionData);
       
-        if (condError) console.error('Error saving conditions:', condError);
+        if (condError) {
+          console.error('Error saving conditions:', condError);
+          hasErrors = true;
+          errorDetails.push(`Conditions: ${condError.message}`);
+        }
       } else {
         console.log('No conditions to save');
       }
       
       // Save medications if any
       if (extractedParameters?.aiAnalysis?.medications?.length > 0) {
+        const medicationData = extractedParameters.aiAnalysis.medications
+          .filter(medication => medication && medication.trim()) // Filter out empty strings
+          .map(medication => ({
+            record_id: insertedReport.id,
+            medication_name: medication.trim(),
+            user_id: userId, // Add user_id here as well for consistency
+            created_at: new Date().toISOString()
+          }));
+        
+        console.log('Saving medications:', medicationData.length);
         const { error: medError } = await supabase
           .from('report_medications')
-          .insert(
-            extractedParameters.aiAnalysis.medications.map(medication => ({
-              record_id: reportData.id,
-              medication_name: medication,
-              created_at: new Date().toISOString()
-            }))
-          );
+          .insert(medicationData);
       
-        if (medError) console.error('Error saving medications:', medError);
+        if (medError) {
+          console.error('Error saving medications:', medError);
+          hasErrors = true;
+          errorDetails.push(`Medications: ${medError.message}`);
+        }
       } else {
         console.log('No medications to save');
       }
       
       // Save recommendations if any
       if (extractedParameters?.aiAnalysis?.recommendations) {
+        console.log('Saving recommendations');
         const { error: recError } = await supabase
           .from('report_recommendations')
           .insert([{
-            record_id: reportData.id,
+            record_id: insertedReport.id,
             recommendation_text: extractedParameters.aiAnalysis.recommendations,
+            user_id: userId, // Add user_id here as well for consistency
             created_at: new Date().toISOString()
           }]);
       
-        if (recError) console.error('Error saving recommendations:', recError);
+        if (recError) {
+          console.error('Error saving recommendations:', recError);
+          hasErrors = true;
+          errorDetails.push(`Recommendations: ${recError.message}`);
+        }
       } else {
         console.log('No recommendations to save');
       }
   
       // Refresh data
-      fetchHealthData(userId);
+      await fetchHealthData(userId);
       
       // Reset form
       setShowModal(false);
@@ -286,18 +455,16 @@ const HealthOverview = () => {
       setPreview(null);
       setExtractedParameters({});
       
-      // Show success notification
-      setNotification({
-        message: 'Report uploaded successfully!',
-        type: 'success'
-      });
+      // Show success notification with any partial errors
+      if (hasErrors) {
+        showNotification(`Report uploaded but some data couldn't be saved: ${errorDetails.join(', ')}`, 'warning');
+      } else {
+        showNotification('Report uploaded successfully!', 'success');
+      }
       
     } catch (error) {
       console.error('Error uploading report:', error);
-      setNotification({
-        message: `Error uploading report: ${error.message}`,
-        type: 'danger'
-      });
+      showNotification(`Error uploading report: ${error.message}`, 'danger');
     } finally {
       setLoading(false);
     }
@@ -440,16 +607,10 @@ const HealthOverview = () => {
       // Refresh data from the database
       fetchHealthData(userId);
       
-      setNotification({
-        message: 'Report deleted successfully',
-        type: 'success'
-      });
+      showNotification('Report deleted successfully', 'success');
     } catch (error) {
       console.error('Error in delete process:', error);
-      setNotification({
-        message: `Error deleting report: ${error.message}`,
-        type: 'danger'
-      });
+      showNotification(`Error deleting report: ${error.message}`, 'danger');
     } finally {
       setLoading(false);
       setShowDeleteModal(false);
@@ -457,20 +618,55 @@ const HealthOverview = () => {
     }
   };
 
+  // Add a function to handle notifications
+  const showNotification = (message, type = 'info', duration = 5000) => {
+    // Clear any existing timeout
+    if (notificationTimeout) {
+      clearTimeout(notificationTimeout);
+    }
+    
+    // Set the notification
+    setNotification({ message, type });
+    
+    // Set a timeout to clear the notification
+    const timeout = setTimeout(() => {
+      setNotification(null);
+    }, duration);
+    
+    setNotificationTimeout(timeout);
+  };
+  
+  // Clean up timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+      }
+    };
+  }, [notificationTimeout]);
+
   return (
     <Container className="py-4">
       {loading && <Spinner />}
       {notification && (
         <div 
-          className={`alert alert-${notification.type} position-fixed`} 
-          style={{top: '20px', right: '20px', zIndex: 1050}}
+          className={`alert alert-${notification.type} position-fixed d-flex justify-content-between align-items-center`} 
+          style={{
+            top: '20px', 
+            right: '20px', 
+            zIndex: 1050,
+            minWidth: '300px',
+            maxWidth: '500px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
           role="alert"
         >
-          {notification.message}
+          <span>{notification.message}</span>
           <button 
             type="button" 
-            className="btn-close" 
+            className="btn-close ms-3" 
             onClick={() => setNotification(null)}
+            aria-label="Close"
           ></button>
         </div>
       )}
