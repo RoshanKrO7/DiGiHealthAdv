@@ -83,12 +83,10 @@ app.post('/api/process-file', upload.single('file'), async (req, res) => {
       const data = await pdfParse(dataBuffer);
       textContent = data.text;
     } else if (file.mimetype.startsWith('image/')) {
-      const { data: { text } } = await Tesseract.recognize(
-        file.path,
-        'eng',
-        { logger: m => console.log(m) }
-      );
-      textContent = text;
+      // TEMPORARY: Return a meaningful error about image processing
+      return res.status(400).json({
+        error: 'Image processing is temporarily unavailable. Please use PDF files for now.'
+      });
     } else {
       // Try to read as text
       textContent = fs.readFileSync(file.path, 'utf8');
