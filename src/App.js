@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -38,7 +38,7 @@ import HealthRecommendations from './pages/ai/HealthRecommendations';
 
 function App() {
   return (
-    <Router basename="/DiGiHealthAdv">
+    <Router>
       <AuthProvider>
         <ToastContainer
           position="top-right"
