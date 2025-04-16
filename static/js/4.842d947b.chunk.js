@@ -1,0 +1,2 @@
+(this.webpackJsonpdigihealth=this.webpackJsonpdigihealth||[]).push([[4],{79:function(e,t,s){"use strict";e.exports=function(){throw new Error("ws does not work in the browser. Browser clients must use the native WebSocket object")}}}]);
+//# sourceMappingURL=4.842d947b.chunk.js.map
