@@ -122,26 +122,17 @@ const HealthOverview = () => {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Backend error response:', errorData);
         throw new Error(errorData.error || 'Error processing file');
       }
       
       const result = await response.json();
       console.log('Backend response:', result);
 
-      // Add fallback for empty AI analysis
-      if (!result.aiAnalysis || 
-          (!result.aiAnalysis.summary && 
-           result.aiAnalysis.conditions.length === 0 && 
-           result.aiAnalysis.medications.length === 0 && 
-           !result.aiAnalysis.recommendations)) {
-        
-        // Create a basic fallback analysis based on file name and type
-        result.aiAnalysis = {
-          summary: `This appears to be a medical document of type ${file.type.split('/')[1]}. Review manually for detailed information.`,
-          conditions: [],
-          medications: [],
-          recommendations: "Consider reviewing this document with a healthcare professional."
-        };
+      // Add validation for the response structure
+      if (!result || (!result.parameters && !result.aiAnalysis)) {
+        console.error('Invalid response structure:', result);
+        throw new Error('Invalid response from server');
       }
 
       setExtractedParameters(result);

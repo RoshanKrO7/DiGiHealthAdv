@@ -10,7 +10,11 @@ const path = require('path');
 //const Tesseract = require('tesseract.js');
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: ['https://roshankro7.github.io', 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
 app.use(express.json());
 
 const openai = new OpenAI({
@@ -18,7 +22,12 @@ const openai = new OpenAI({
 });
 
 // Configure multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+    dest: 'uploads/',
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
 
 // Create endpoint for your health report analysis
 app.post('/api/analyze-report', async (req, res) => {
@@ -173,6 +182,27 @@ app.post('/api/health-recommendations', async (req, res) => {
     console.error("OpenAI API error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Add this to your server.js
+app.get('/api/debug', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date(),
+        env: process.env.NODE_ENV,
+        openaiKey: process.env.OPENAI_API_KEY ? 'present' : 'missing'
+    });
+});
+
+app.post('/api/debug-upload', upload.single('file'), (req, res) => {
+    res.json({
+        file: req.file ? {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size
+        } : 'no file',
+        body: req.body
+    });
 });
 
 app.listen(process.env.PORT || 3001, () => {
