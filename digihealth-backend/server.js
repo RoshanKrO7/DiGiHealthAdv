@@ -293,6 +293,29 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
           }
         };
         
+        // Convert all parameter values to strings to avoid client-side rendering issues
+        if (result.parameters) {
+          Object.keys(result.parameters).forEach(key => {
+            const value = result.parameters[key];
+            if (value === null || value === undefined) {
+              result.parameters[key] = 'N/A';
+            } else if (typeof value === 'object') {
+              result.parameters[key] = JSON.stringify(value);
+            } else {
+              result.parameters[key] = String(value);
+            }
+          });
+        }
+        
+        // Ensure all arrays are properly formatted
+        ['conditions', 'medications'].forEach(field => {
+          if (result.aiAnalysis[field]) {
+            result.aiAnalysis[field] = result.aiAnalysis[field]
+              .filter(item => item != null)
+              .map(item => typeof item === 'object' ? JSON.stringify(item) : String(item));
+          }
+        });
+        
         console.log("OpenAI Response Structure:", 
           Object.keys(result), 
           "Contains parameters:", typeof result.parameters === 'object',
@@ -419,6 +442,60 @@ app.get('/api/check-env', (req, res) => {
     environment: envVars,
     isRender: Boolean(process.env.RENDER_SERVICE_ID)
   });
+});
+
+// Add this test endpoint for frontend rendering validation
+app.get('/api/test-response', (req, res) => {
+  // Generate a test response with various data types to verify frontend rendering
+  const testResponse = {
+    parameters: {
+      // String values
+      "Blood Pressure": "120/80 mmHg",
+      "Heart Rate": "72 bpm",
+      "Temperature": "98.6 F",
+      // Number values that should be converted to strings
+      "Cholesterol": 180,
+      "Glucose": 95,
+      // Null/undefined values that should be handled
+      "Missing Value": null,
+      // Object values that should be stringified
+      "Complex Value": { min: 60, max: 100, unit: "mg/dL" },
+      // Array values
+      "Multiple Values": [120, 130, 125],
+      // Boolean values
+      "Test Result": true
+    },
+    aiAnalysis: {
+      conditions: [
+        "Type 2 Diabetes", 
+        "Hypertension", 
+        "Hyperlipidemia"
+      ],
+      medications: [
+        "Metformin 500mg twice daily",
+        "Lisinopril 10mg daily",
+        "Atorvastatin 20mg daily"
+      ],
+      recommendations: "Follow up in 3 months. Continue current medications. Increase physical activity to 30 minutes daily.",
+      summary: "Patient shows stable vital signs with well-controlled diabetes and hypertension. Recent lab values are within expected ranges given patient history."
+    }
+  };
+  
+  // Implement the same conversions used in the process-file endpoint
+  // Convert all parameter values to strings
+  Object.keys(testResponse.parameters).forEach(key => {
+    const value = testResponse.parameters[key];
+    if (value === null || value === undefined) {
+      testResponse.parameters[key] = 'N/A';
+    } else if (typeof value === 'object') {
+      testResponse.parameters[key] = JSON.stringify(value);
+    } else {
+      testResponse.parameters[key] = String(value);
+    }
+  });
+  
+  // Return the test response
+  res.json(testResponse);
 });
 
 // Error handling middleware

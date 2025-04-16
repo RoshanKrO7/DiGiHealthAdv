@@ -209,6 +209,102 @@ const HealthOverview = () => {
       try {
         result = await response.json();
         console.log('Backend response:', result);
+        
+        // Log the structure of the response for debugging
+        console.log('Response structure details:', {
+          hasParameters: Boolean(result.parameters),
+          parametersType: typeof result.parameters,
+          parametersKeys: result.parameters ? Object.keys(result.parameters) : [],
+          parametersValues: result.parameters ? Object.values(result.parameters).map(v => typeof v) : [],
+          hasAiAnalysis: Boolean(result.aiAnalysis),
+          aiAnalysisType: typeof result.aiAnalysis,
+          aiAnalysisKeys: result.aiAnalysis ? Object.keys(result.aiAnalysis) : [],
+          conditionsType: result.aiAnalysis?.conditions ? typeof result.aiAnalysis.conditions : 'undefined',
+          isConditionsArray: result.aiAnalysis?.conditions ? Array.isArray(result.aiAnalysis.conditions) : false,
+          medicationsType: result.aiAnalysis?.medications ? typeof result.aiAnalysis.medications : 'undefined',
+          isMedicationsArray: result.aiAnalysis?.medications ? Array.isArray(result.aiAnalysis.medications) : false
+        });
+        
+        // Ensure all parameter values are strings to avoid React rendering issues
+        if (result && result.parameters) {
+          Object.keys(result.parameters).forEach(key => {
+            const value = result.parameters[key];
+            if (value === null || value === undefined) {
+              result.parameters[key] = 'N/A';
+            } else if (typeof value === 'object') {
+              result.parameters[key] = JSON.stringify(value);
+            } else {
+              result.parameters[key] = String(value);
+            }
+          });
+        }
+        
+        // Ensure aiAnalysis and its properties exist and are correctly formatted
+        if (result && result.aiAnalysis) {
+          // Ensure conditions is an array of strings
+          if (!Array.isArray(result.aiAnalysis.conditions)) {
+            console.warn('Conditions is not an array, converting:', result.aiAnalysis.conditions);
+            
+            if (typeof result.aiAnalysis.conditions === 'string') {
+              // If it's a string, try to parse as JSON
+              try {
+                result.aiAnalysis.conditions = JSON.parse(result.aiAnalysis.conditions);
+              } catch {
+                // If parsing fails, make it a single-item array
+                result.aiAnalysis.conditions = [result.aiAnalysis.conditions];
+              }
+            } else if (!result.aiAnalysis.conditions) {
+              // If it doesn't exist or is null/undefined
+              result.aiAnalysis.conditions = [];
+            } else if (typeof result.aiAnalysis.conditions === 'object') {
+              // If it's a non-array object, convert to array of strings
+              result.aiAnalysis.conditions = Object.values(result.aiAnalysis.conditions).map(String);
+            } else {
+              // Fallback to empty array
+              result.aiAnalysis.conditions = [];
+            }
+          }
+          
+          // Ensure medications is an array of strings
+          if (!Array.isArray(result.aiAnalysis.medications)) {
+            console.warn('Medications is not an array, converting:', result.aiAnalysis.medications);
+            
+            if (typeof result.aiAnalysis.medications === 'string') {
+              try {
+                result.aiAnalysis.medications = JSON.parse(result.aiAnalysis.medications);
+              } catch {
+                result.aiAnalysis.medications = [result.aiAnalysis.medications];
+              }
+            } else if (!result.aiAnalysis.medications) {
+              result.aiAnalysis.medications = [];
+            } else if (typeof result.aiAnalysis.medications === 'object') {
+              result.aiAnalysis.medications = Object.values(result.aiAnalysis.medications).map(String);
+            } else {
+              result.aiAnalysis.medications = [];
+            }
+          }
+          
+          // Ensure all elements in arrays are strings
+          result.aiAnalysis.conditions = result.aiAnalysis.conditions
+            .filter(item => item !== null && item !== undefined)
+            .map(item => String(item));
+            
+          result.aiAnalysis.medications = result.aiAnalysis.medications
+            .filter(item => item !== null && item !== undefined)
+            .map(item => String(item));
+            
+          // Ensure summary and recommendations are strings
+          result.aiAnalysis.summary = String(result.aiAnalysis.summary || '');
+          result.aiAnalysis.recommendations = String(result.aiAnalysis.recommendations || '');
+        } else if (result) {
+          // Create default aiAnalysis if missing
+          result.aiAnalysis = {
+            conditions: [],
+            medications: [],
+            recommendations: '',
+            summary: ''
+          };
+        }
       } catch (jsonError) {
         console.error('Failed to parse response JSON:', jsonError);
         throw new Error('Failed to parse server response. The file may be too large or in an unsupported format.');
@@ -357,7 +453,7 @@ const HealthOverview = () => {
           user_id: userId,
           record_id: insertedReport.id,
           parameter_name: key,
-          parameter_value: String(value || "N/A"), // Convert to string and provide default
+          parameter_value: typeof value === 'object' ? JSON.stringify(value) : String(value || "N/A"),
           created_at: new Date().toISOString()
         }));
         
@@ -645,6 +741,40 @@ const HealthOverview = () => {
     };
   }, [notificationTimeout]);
 
+  // Add a test function to validate rendering with sample data
+  const testBackendResponse = async () => {
+    try {
+      showNotification('Testing with sample data...', 'info');
+      setLoading(true);
+      
+      const response = await fetch('https://digihealth-backend.onrender.com/api/test-response');
+      if (!response.ok) {
+        throw new Error('Error fetching test data');
+      }
+      
+      const result = await response.json();
+      console.log('Test response received:', result);
+      
+      // Set the extracted parameters with the test data
+      setExtractedParameters(result);
+      
+      showNotification('Test data loaded successfully! You can view it in the modal.', 'success');
+      
+      // Open the modal to display the test data
+      setNewReport({
+        disease_id: userDiseases.length > 0 ? userDiseases[0].id : '',
+        since: new Date().toISOString().split('T')[0],
+        file: null
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error testing backend response:', error);
+      showNotification(`Error: ${error.message}`, 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container className="py-4">
       {loading && <Spinner />}
@@ -767,7 +897,7 @@ const HealthOverview = () => {
                 <ul className="list-group">
                   {Object.entries(extractedParameters.parameters).map(([name, value]) => (
                     <li key={name} className="list-group-item">
-                      {name}: {value}
+                      {name}: {typeof value === 'object' ? JSON.stringify(value) : String(value || 'N/A')}
                     </li>
                   ))}
                 </ul>
@@ -784,13 +914,49 @@ const HealthOverview = () => {
                     {extractedParameters.aiAnalysis.summary ? (
                       <>
                         <h6>Summary</h6>
-                        <p>{extractedParameters.aiAnalysis.summary}</p>
+                        <p>{String(extractedParameters.aiAnalysis.summary)}</p>
                       </>
                     ) : (
                       <p className="text-muted">No summary available for this document.</p>
                     )}
                     
-                    {/* Rest of your display logic */}
+                    {/* Display conditions */}
+                    {extractedParameters.aiAnalysis.conditions && 
+                      extractedParameters.aiAnalysis.conditions.length > 0 && (
+                      <>
+                        <h6 className="mt-3">Conditions Identified</h6>
+                        <ul className="list-group">
+                          {extractedParameters.aiAnalysis.conditions.map((condition, index) => (
+                            <li key={index} className="list-group-item list-group-item-info">
+                              {String(condition)}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    
+                    {/* Display medications */}
+                    {extractedParameters.aiAnalysis.medications && 
+                      extractedParameters.aiAnalysis.medications.length > 0 && (
+                      <>
+                        <h6 className="mt-3">Medications</h6>
+                        <ul className="list-group">
+                          {extractedParameters.aiAnalysis.medications.map((medication, index) => (
+                            <li key={index} className="list-group-item list-group-item-warning">
+                              {String(medication)}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    
+                    {/* Display recommendations */}
+                    {extractedParameters.aiAnalysis.recommendations && (
+                      <>
+                        <h6 className="mt-3">Recommendations</h6>
+                        <p>{String(extractedParameters.aiAnalysis.recommendations)}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -819,6 +985,21 @@ const HealthOverview = () => {
           </div>
         </Modal.Body>
       </Modal>
+
+      <div className="mt-5 pt-5 border-top">
+        <h5>Troubleshooting</h5>
+        <Button 
+          variant="outline-secondary" 
+          size="sm" 
+          onClick={testBackendResponse}
+          className="mt-2"
+        >
+          Test Rendering
+        </Button>
+        <small className="d-block text-muted mt-2">
+          Use this button to test rendering with sample data if you encounter issues.
+        </small>
+      </div>
     </Container>
   );
 };
