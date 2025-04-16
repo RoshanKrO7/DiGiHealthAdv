@@ -99,9 +99,13 @@ const HealthOverview = () => {
     try {
       // Show preview for image files
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => setPreview(reader.result);
-        reader.readAsDataURL(file);
+        // Warn user that image analysis is temporarily disabled
+        setNotification({
+          message: 'Image processing is temporarily unavailable. Please use PDF files for now.',
+          type: 'warning'
+        });
+        setLoading(false);
+        return;
       } else {
         setPreview(null);
       }

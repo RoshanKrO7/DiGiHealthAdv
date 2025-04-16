@@ -7,7 +7,7 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
-const Tesseract = require('tesseract.js');
+//const Tesseract = require('tesseract.js');
 const app = express();
 
 app.use(cors());
