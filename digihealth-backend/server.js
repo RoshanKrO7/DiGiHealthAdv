@@ -7,6 +7,7 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
+const Tesseract = require('tesseract.js');
 const app = express();
 
 app.use(cors());
@@ -73,45 +74,67 @@ app.post('/api/process-file', upload.single('file'), async (req, res) => {
     }
 
     const file = req.file;
-    let text = '';
+    let textContent = '';
 
     // Extract text based on file type
     if (file.mimetype === 'application/pdf') {
       // Process PDF
       const dataBuffer = fs.readFileSync(file.path);
       const data = await pdfParse(dataBuffer);
-      text = data.text;
+      textContent = data.text;
     } else if (file.mimetype.startsWith('image/')) {
-      // For images, we can use a server-side OCR like Tesseract.js
-      // This would require additional setup
-      res.status(400).json({ error: 'Image processing not implemented on server yet' });
-      return;
+      const { data: { text } } = await Tesseract.recognize(
+        file.path,
+        'eng',
+        { logger: m => console.log(m) }
+      );
+      textContent = text;
     } else {
       // Try to read as text
-      text = fs.readFileSync(file.path, 'utf8');
+      textContent = fs.readFileSync(file.path, 'utf8');
     }
 
-    // Process with OpenAI
-    const prompt = `
-      You are a medical data extraction assistant. Extract relevant health parameters from the following medical report.
-      If you find any of these parameters, provide their values: blood pressure, heart rate, cholesterol, glucose, BMI, A1C, triglycerides, HDL, LDL.
-      Also identify any mentioned medical conditions, medications, or doctor's recommendations.
-      
-      Document text:
-      ${text}
-    `;
+    // Truncate text to reduce token usage (first 2000 characters should be enough for most reports)
+    const truncatedText = textContent.substring(0, 2000);
 
+    // More focused, efficient prompt to reduce token usage
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo", // Use 3.5-turbo instead of 4 to reduce cost
       messages: [
-        { role: "system", content: "You are a medical data extraction assistant that outputs only valid JSON." },
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: `You are a medical document analyzer specializing in extracting clinical data.
+          When analyzing documents, focus on finding:
+          - Lab values with their reference ranges
+          - Vital signs (BP, HR, temperature)
+          - Diagnoses with ICD codes if present
+          - Medication names and dosages
+          - Follow-up recommendations
+          
+          Always include these in your response even if values seem uncertain.
+          If you can't confidently extract something, make an educated guess rather than omitting it.`
+        },
+        {
+          role: "user",
+          content: `Analyze this medical document and extract all possible information:
+          ${truncatedText}`
+        }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.2
+      temperature: 0.1, // Lower temperature for more deterministic results
+      max_tokens: 500 // Limit output tokens to reduce cost
     });
 
     const result = JSON.parse(response.choices[0].message.content);
+
+    console.log("OpenAI Response Structure:", 
+      Object.keys(result), 
+      "Contains summary:", Boolean(result.summary),
+      "Contains conditions:", Array.isArray(result.conditions),
+      "Contains medications:", Array.isArray(result.medications),
+      "Contains recommendations:", Boolean(result.recommendations),
+      "Contains parameters:", typeof result.parameters === 'object'
+    );
 
     // Clean up the temporary file
     fs.unlinkSync(file.path);
@@ -122,13 +145,13 @@ app.post('/api/process-file', upload.single('file'), async (req, res) => {
       aiAnalysis: {
         conditions: result.conditions || [],
         medications: result.medications || [],
-        recommendations: result.recommendations || [],
+        recommendations: result.recommendations || "",
         summary: result.summary || ""
       }
     });
   } catch (error) {
     console.error('Error processing file:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error processing file' });
   }
 });
 

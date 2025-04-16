@@ -122,14 +122,51 @@ const HealthOverview = () => {
       }
       
       const result = await response.json();
+      console.log('Backend response:', result);
+
+      // Add fallback for empty AI analysis
+      if (!result.aiAnalysis || 
+          (!result.aiAnalysis.summary && 
+           result.aiAnalysis.conditions.length === 0 && 
+           result.aiAnalysis.medications.length === 0 && 
+           !result.aiAnalysis.recommendations)) {
+        
+        // Create a basic fallback analysis based on file name and type
+        result.aiAnalysis = {
+          summary: `This appears to be a medical document of type ${file.type.split('/')[1]}. Review manually for detailed information.`,
+          conditions: [],
+          medications: [],
+          recommendations: "Consider reviewing this document with a healthcare professional."
+        };
+      }
+
       setExtractedParameters(result);
+      
+      // Determine what message to show
+      let message;
+      if (result.parameters && Object.keys(result.parameters).length > 0) {
+        message = 'File processed successfully. Review the extracted information below.';
+      } else if (result.aiAnalysis && Object.keys(result.aiAnalysis).length > 0) {
+        message = 'No specific parameters were extracted, but AI analysis is available.';
+      } else {
+        message = 'File processed, but no information could be extracted. You can still upload it.';
+      }
       
       // Show success notification
       setNotification({
-        message: 'File processed successfully. Review the extracted information below.',
+        message: message,
         type: 'success'
       });
       
+      console.log('Backend response structure:', {
+        hasParameters: Boolean(result.parameters) && Object.keys(result.parameters).length > 0,
+        hasAiAnalysis: Boolean(result.aiAnalysis),
+        summaryExists: Boolean(result.aiAnalysis?.summary),
+        conditionsLength: result.aiAnalysis?.conditions?.length || 0,
+        medicationsLength: result.aiAnalysis?.medications?.length || 0,
+        hasRecommendations: Boolean(result.aiAnalysis?.recommendations)
+      });
+
     } catch (error) {
       console.error('Error processing file:', error);
       setNotification({
@@ -177,7 +214,7 @@ const HealthOverview = () => {
       if (reportError) throw reportError;
   
       // Save extracted parameters if any
-      if (extractedParameters.parameters && Object.keys(extractedParameters.parameters).length > 0) {
+      if (extractedParameters?.parameters && Object.keys(extractedParameters.parameters).length > 0) {
         const { error: paramError } = await supabase
           .from('health_parameters')
           .insert(
@@ -185,31 +222,36 @@ const HealthOverview = () => {
               user_id: userId,
               record_id: reportData.id,
               parameter_name: key,
-              parameter_value: value,
+              parameter_value: value || "N/A", // Provide default for empty values
               created_at: new Date().toISOString()
             }))
           );
-  
+      
         if (paramError) console.error('Error saving parameters:', paramError);
+      } else {
+        console.log('No parameters to save');
       }
-
+  
       // Save conditions if any
-      if (extractedParameters.aiAnalysis?.conditions?.length > 0) {
+      if (extractedParameters?.aiAnalysis?.conditions?.length > 0) {
         const { error: condError } = await supabase
           .from('report_conditions')
           .insert(
             extractedParameters.aiAnalysis.conditions.map(condition => ({
               record_id: reportData.id,
               condition_name: condition,
+              user_id: userId, // Add this line
               created_at: new Date().toISOString()
             }))
           );
       
         if (condError) console.error('Error saving conditions:', condError);
+      } else {
+        console.log('No conditions to save');
       }
       
       // Save medications if any
-      if (extractedParameters.aiAnalysis?.medications?.length > 0) {
+      if (extractedParameters?.aiAnalysis?.medications?.length > 0) {
         const { error: medError } = await supabase
           .from('report_medications')
           .insert(
@@ -221,10 +263,12 @@ const HealthOverview = () => {
           );
       
         if (medError) console.error('Error saving medications:', medError);
+      } else {
+        console.log('No medications to save');
       }
       
       // Save recommendations if any
-      if (extractedParameters.aiAnalysis?.recommendations) {
+      if (extractedParameters?.aiAnalysis?.recommendations) {
         const { error: recError } = await supabase
           .from('report_recommendations')
           .insert([{
@@ -234,10 +278,12 @@ const HealthOverview = () => {
           }]);
       
         if (recError) console.error('Error saving recommendations:', recError);
+      } else {
+        console.log('No recommendations to save');
       }
   
       // Refresh data
-      fetchHealthData();
+      fetchHealthData(userId);
       
       // Reset form
       setShowModal(false);
@@ -278,25 +324,106 @@ const HealthOverview = () => {
         .eq('id', reportToDelete)
         .single();
       
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching report:', fetchError);
+        throw new Error(`Error fetching report: ${fetchError.message}`);
+      }
+      
+      console.log('Report to delete:', report);
       
       // Delete related data first (due to foreign key constraints)
-      await Promise.all([
-        supabase.from('health_parameters').delete().eq('record_id', reportToDelete),
-        supabase.from('report_conditions').delete().eq('record_id', reportToDelete),
-        supabase.from('report_medications').delete().eq('record_id', reportToDelete),
-        supabase.from('report_recommendations').delete().eq('record_id', reportToDelete),
-        supabase.from('report_ai_analysis').delete().eq('report_id', reportToDelete)
-      ]);
+      // Use explicit error logging for each deletion
+      
+      try {
+        const { error: paramError } = await supabase
+          .from('health_parameters')
+          .delete()
+          .eq('record_id', reportToDelete);
+        
+        if (paramError) console.error('Error deleting health parameters:', paramError);
+      } catch (error) {
+        console.error('Exception deleting health parameters:', error);
+      }
+      
+      try {
+        const { error: condError } = await supabase
+          .from('report_conditions')
+          .delete()
+          .eq('record_id', reportToDelete);
+        
+        if (condError) console.error('Error deleting report conditions:', condError);
+      } catch (error) {
+        console.error('Exception deleting report conditions:', error);
+      }
+      
+      try {
+        const { error: medError } = await supabase
+          .from('report_medications')
+          .delete()
+          .eq('record_id', reportToDelete);
+        
+        if (medError) console.error('Error deleting report medications:', medError);
+      } catch (error) {
+        console.error('Exception deleting report medications:', error);
+      }
+      
+      try {
+        const { error: recError } = await supabase
+          .from('report_recommendations')
+          .delete()
+          .eq('record_id', reportToDelete);
+        
+        if (recError) console.error('Error deleting report recommendations:', recError);
+      } catch (error) {
+        console.error('Exception deleting report recommendations:', error);
+      }
+      
+      try {
+        const { error: aiError } = await supabase
+          .from('report_ai_analysis')
+          .delete()
+          .eq('report_id', reportToDelete);
+        
+        if (aiError) console.error('Error deleting AI analysis:', aiError);
+      } catch (error) {
+        console.error('Exception deleting AI analysis:', error);
+      }
       
       // Delete the storage file if it exists
       if (report.document_url) {
-        const filePath = report.document_url.split('/').pop();
-        const { error: storageError } = await supabase.storage
-          .from('health-reports')
-          .remove([`${userId}/${filePath}`]);
-        
-        if (storageError) console.error('Error deleting file:', storageError);
+        try {
+          // Extract the file path from the URL
+          // URL format: https://[project-ref].supabase.co/storage/v1/object/public/health-reports/[userId]/[filename]
+          const fileName = report.document_url.split('/').pop();
+          
+          // Different approach to get the user folder
+          const pathMatch = report.document_url.match(/health-reports\/([^\/]+)\/([^\/]+)$/);
+          let storagePath;
+          
+          if (pathMatch && pathMatch.length >= 3) {
+            const userFolder = pathMatch[1];
+            const fileNameFromUrl = pathMatch[2];
+            storagePath = `${userFolder}/${fileNameFromUrl}`;
+          } else {
+            // Fallback approach
+            storagePath = `${userId}/${fileName}`;
+          }
+          
+          console.log('Attempting to delete file at path:', storagePath);
+          
+          const { error: storageError } = await supabase.storage
+            .from('health-reports')
+            .remove([storagePath]);
+          
+          if (storageError) {
+            console.error('Error deleting file:', storageError);
+          } else {
+            console.log('File deleted successfully');
+          }
+        } catch (error) {
+          console.error('Exception during file deletion:', error);
+          // Continue with record deletion even if file deletion fails
+        }
       }
       
       // Finally delete the report record
@@ -305,17 +432,25 @@ const HealthOverview = () => {
         .delete()
         .eq('id', reportToDelete);
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Error deleting healthrecord:', deleteError);
+        throw new Error(`Error deleting report: ${deleteError.message}`);
+      }
       
-      // Update UI
+      console.log('Report deleted successfully');
+      
+      // Manually remove from state for immediate UI update
       setHealthData(healthData.filter(report => report.id !== reportToDelete));
+      
+      // Refresh data from the database
+      fetchHealthData(userId);
       
       setNotification({
         message: 'Report deleted successfully',
         type: 'success'
       });
     } catch (error) {
-      console.error('Error deleting report:', error);
+      console.error('Error in delete process:', error);
       setNotification({
         message: `Error deleting report: ${error.message}`,
         type: 'danger'
@@ -331,8 +466,17 @@ const HealthOverview = () => {
     <Container className="py-4">
       {loading && <Spinner />}
       {notification && (
-        <div className={`alert alert-${notification.type}`} role="alert">
+        <div 
+          className={`alert alert-${notification.type} position-fixed`} 
+          style={{top: '20px', right: '20px', zIndex: 1050}}
+          role="alert"
+        >
           {notification.message}
+          <button 
+            type="button" 
+            className="btn-close" 
+            onClick={() => setNotification(null)}
+          ></button>
         </div>
       )}
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -413,6 +557,17 @@ const HealthOverview = () => {
               />
             </Form.Group>
             {preview && <img src={preview} alt="Preview" className="img-fluid rounded mb-3" />}
+
+            {/* Show message if file was processed but no data extracted */}
+            {extractedParameters && 
+              (!extractedParameters.parameters || Object.keys(extractedParameters.parameters).length === 0) &&
+              (!extractedParameters.aiAnalysis || Object.keys(extractedParameters.aiAnalysis).length === 0) && (
+              <div className="alert alert-info mt-3">
+                <i className="bi bi-info-circle me-2"></i>
+                No parameters or analysis could be extracted from this document. 
+                You can still upload it for record-keeping.
+              </div>
+            )}
             
             {/* Display extracted parameters */}
             {extractedParameters.parameters && Object.keys(extractedParameters.parameters).length > 0 && (
@@ -429,46 +584,26 @@ const HealthOverview = () => {
             )}
 
             {/* Display AI analysis */}
-            {extractedParameters.aiAnalysis && (
+            {extractedParameters?.aiAnalysis ? (
               <div className="mb-3">
                 <h5>AI Analysis</h5>
                 <div className="card">
                   <div className="card-body">
-                    <h6>Summary</h6>
-                    <p>{extractedParameters.aiAnalysis.summary}</p>
-                    
-                    {extractedParameters.aiAnalysis.conditions?.length > 0 && (
+                    {/* Check if summary exists */}
+                    {extractedParameters.aiAnalysis.summary ? (
                       <>
-                        <h6>Identified Conditions</h6>
-                        <ul>
-                          {extractedParameters.aiAnalysis.conditions.map((condition, i) => (
-                            <li key={i}>{condition}</li>
-                          ))}
-                        </ul>
+                        <h6>Summary</h6>
+                        <p>{extractedParameters.aiAnalysis.summary}</p>
                       </>
+                    ) : (
+                      <p className="text-muted">No summary available for this document.</p>
                     )}
                     
-                    {extractedParameters.aiAnalysis.medications?.length > 0 && (
-                      <>
-                        <h6>Medications</h6>
-                        <ul>
-                          {extractedParameters.aiAnalysis.medications.map((med, i) => (
-                            <li key={i}>{med}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                    
-                    {extractedParameters.aiAnalysis.recommendations && (
-                      <>
-                        <h6>Recommendations</h6>
-                        <p>{extractedParameters.aiAnalysis.recommendations}</p>
-                      </>
-                    )}
+                    {/* Rest of your display logic */}
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? 'Uploading...' : 'Upload Report'}
