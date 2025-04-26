@@ -1,30 +1,30 @@
 {
   "files": {
     "main.css": "/DiGiHealthAdv/static/css/main.e25dd692.chunk.css",
-    "main.js": "/DiGiHealthAdv/static/js/main.ee7f01e9.chunk.js",
-    "main.js.map": "/DiGiHealthAdv/static/js/main.ee7f01e9.chunk.js.map",
+    "main.js": "/DiGiHealthAdv/static/js/main.8f488ee5.chunk.js",
+    "main.js.map": "/DiGiHealthAdv/static/js/main.8f488ee5.chunk.js.map",
     "runtime-main.js": "/DiGiHealthAdv/static/js/runtime-main.53046adb.js",
     "runtime-main.js.map": "/DiGiHealthAdv/static/js/runtime-main.53046adb.js.map",
     "static/css/2.6c4dce77.chunk.css": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css",
-    "static/js/2.c475d37f.chunk.js": "/DiGiHealthAdv/static/js/2.c475d37f.chunk.js",
-    "static/js/2.c475d37f.chunk.js.map": "/DiGiHealthAdv/static/js/2.c475d37f.chunk.js.map",
+    "static/js/2.132f3cae.chunk.js": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js",
+    "static/js/2.132f3cae.chunk.js.map": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js.map",
     "static/js/3.90f7d771.chunk.js": "/DiGiHealthAdv/static/js/3.90f7d771.chunk.js",
     "static/js/3.90f7d771.chunk.js.map": "/DiGiHealthAdv/static/js/3.90f7d771.chunk.js.map",
     "static/js/4.cd86c8e5.chunk.js": "/DiGiHealthAdv/static/js/4.cd86c8e5.chunk.js",
     "static/js/4.cd86c8e5.chunk.js.map": "/DiGiHealthAdv/static/js/4.cd86c8e5.chunk.js.map",
     "index.html": "/DiGiHealthAdv/index.html",
-    "precache-manifest.a291c1ffa85c7438f244125aaa00be80.js": "/DiGiHealthAdv/precache-manifest.a291c1ffa85c7438f244125aaa00be80.js",
+    "precache-manifest.61082df0d89c2118be8f17eb5cf74e83.js": "/DiGiHealthAdv/precache-manifest.61082df0d89c2118be8f17eb5cf74e83.js",
     "service-worker.js": "/DiGiHealthAdv/service-worker.js",
     "static/css/2.6c4dce77.chunk.css.map": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css.map",
     "static/css/main.e25dd692.chunk.css.map": "/DiGiHealthAdv/static/css/main.e25dd692.chunk.css.map",
-    "static/js/2.c475d37f.chunk.js.LICENSE.txt": "/DiGiHealthAdv/static/js/2.c475d37f.chunk.js.LICENSE.txt",
+    "static/js/2.132f3cae.chunk.js.LICENSE.txt": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js.LICENSE.txt",
     "static/media/all.min.css": "/DiGiHealthAdv/static/media/fa-v4compatibility.a772da7b.woff2"
   },
   "entrypoints": [
     "static/js/runtime-main.53046adb.js",
     "static/css/2.6c4dce77.chunk.css",
-    "static/js/2.c475d37f.chunk.js",
+    "static/js/2.132f3cae.chunk.js",
     "static/css/main.e25dd692.chunk.css",
-    "static/js/main.ee7f01e9.chunk.js"
+    "static/js/main.8f488ee5.chunk.js"
   ]
 }

@@ -1,23 +1,23 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "52a30c8688feceeec477a9e5448551b5",
+    "revision": "31ca4784cf56a1c078e60fa4708ee89b",
     "url": "/DiGiHealthAdv/index.html"
   },
   {
-    "revision": "f74894a22d79d55cf79a",
+    "revision": "80174d18cc5e778c475d",
     "url": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css"
   },
   {
-    "revision": "0777253cdd90d367cb86",
+    "revision": "ca4e7e6a696378dd2c4b",
     "url": "/DiGiHealthAdv/static/css/main.e25dd692.chunk.css"
   },
   {
-    "revision": "f74894a22d79d55cf79a",
-    "url": "/DiGiHealthAdv/static/js/2.c475d37f.chunk.js"
+    "revision": "80174d18cc5e778c475d",
+    "url": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js"
   },
   {
     "revision": "2e74987d04b98d01cc53ab4ad874ed2c",
-    "url": "/DiGiHealthAdv/static/js/2.c475d37f.chunk.js.LICENSE.txt"
+    "url": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js.LICENSE.txt"
   },
   {
     "revision": "e12a948f4d6801262ea1",
@@ -28,8 +28,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/DiGiHealthAdv/static/js/4.cd86c8e5.chunk.js"
   },
   {
-    "revision": "0777253cdd90d367cb86",
-    "url": "/DiGiHealthAdv/static/js/main.ee7f01e9.chunk.js"
+    "revision": "ca4e7e6a696378dd2c4b",
+    "url": "/DiGiHealthAdv/static/js/main.8f488ee5.chunk.js"
   },
   {
     "revision": "f87c5c0a1a6de5d22d32",
