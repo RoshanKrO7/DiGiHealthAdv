@@ -23,11 +23,12 @@ ChartJS.register(
   Legend
 );
 
-const HealthMetricsVisualizer = ({ timeRange = '1M' }) => {
+const HealthMetricsVisualizer = ({ initialTimeRange = '1M' }) => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState('bloodPressure');
+  const [timeRange, setTimeRange] = useState(initialTimeRange);
 
   const metricOptions = [
     { value: 'bloodPressure', label: 'Blood Pressure' },

@@ -1,9 +1,10 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../utils/main'; // Correct import
+import { supabase } from '../utils/supabaseClient'; // Update import
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles.css';
+import './Auth.css';
 
 const Login = () => {
   const [showSignup, setShowSignup] = useState(false);
@@ -27,6 +28,12 @@ const Login = () => {
     console.log(`Notification: ${message}, Type: ${type}`); // Log the notification type
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Toggle between login and signup
+  const toggleForm = (e) => {
+    if (e) e.preventDefault();
+    setShowSignup(!showSignup);
   };
 
   // Handle Login
@@ -85,8 +92,8 @@ const Login = () => {
       }
       
       showNotification('Account created successfully!', 'success');
-      // Redirect to dashboard after signup (update the path as needed)
-      navigate('/dashboard');
+      // Show login form after successful signup instead of redirecting
+      setShowSignup(false);
     } catch (error) {
       console.error('Signup error:', error.message);
       showNotification(error.message, 'danger');
@@ -94,12 +101,12 @@ const Login = () => {
   };
 
   return (
-    <div id="app">
-      <header>
+    <div id="app" className="auth-container">
+      <header className="auth-header">
         <img
           src={process.env.PUBLIC_URL + '/favicon_io/android-chrome-512x512-Photoroom.png'}
           alt="Logo"
-          className="logo" style={{width: "250px", height: "100%"}}
+          className="logo" style={{width: "200px", height: "auto"}}
         />
       </header>
 
@@ -111,10 +118,9 @@ const Login = () => {
         </div>
       )}
 
-      <div id="login-signup">
-        {/* Login Form */}
+      <div id="login-signup" className={showSignup ? 'signup-mode' : 'login-mode'}>
         {!showSignup ? (
-          <div id="login-form">
+          <div id="login-form" className="active">
             <h2>Login</h2>
             <form className="form1" onSubmit={handleLogin}>
               <label>
@@ -127,6 +133,7 @@ const Login = () => {
                   autoComplete="new-password"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder=" "
                 />
                 <span>Email</span>
               </label>
@@ -140,6 +147,7 @@ const Login = () => {
                   autoComplete="login-password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder=" "
                 />
                 <span>Password</span>
               </label>
@@ -147,15 +155,14 @@ const Login = () => {
                 <button type="submit" id="login-button">
                   Login
                 </button>
-                <button type="button" onClick={() => setShowSignup(true)}>
+                <button type="button" onClick={toggleForm}>
                   Sign Up
                 </button>
               </div>
             </form>
           </div>
         ) : (
-          // Signup Form
-          <div id="signup-form">
+          <div id="signup-form" className="active">
             <form className="form" onSubmit={handleSignup}>
               <p className="message">Signup now</p>
               <div className="flex">
@@ -223,14 +230,12 @@ const Login = () => {
                 <span>Confirm password</span>
               </label>
               <button type="submit" className="submit">
-                Submit
+                Sign Up
               </button>
-              <p className="signin">
-                Already have an account?{' '}
-                <a href="/" onClick={() => setShowSignup(false)}>
-                  Signin
-                </a>
-              </p>
+              <div className="signin">
+                <span>Already have an account?</span>
+                <a href="#" onClick={toggleForm} className="signin-link">Sign in</a>
+              </div>
             </form>
           </div>
         )}

@@ -1,0 +1,62 @@
+/* Footer.css - Complete standalone styling for the footer */
+:root {
+  --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  --footer-height: 60px;
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+}
+
+/* Modern Footer Styling */
+.modern-footer {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: var(--primary-gradient);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  color: white;
+  margin-top: auto;
+  z-index: 10;
+  height: var(--footer-height);
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.footer-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+}
+
+.footer-links a:hover {
+  opacity: 0.8;
+}
+
+/* Responsive footer adjustments */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .modern-footer {
+    padding: 1rem;
+  }
+} 

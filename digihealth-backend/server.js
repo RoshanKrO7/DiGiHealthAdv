@@ -134,17 +134,17 @@ app.post('/api/analyze-report', async (req, res) => {
     // Handle text-based analysis (regular medical reports)
     if (!isImageAnalysis) {
       try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "system", content: "You are a medical data extraction assistant that outputs only valid JSON." },
-            { role: "user", content: text }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.2
-        });
-        
-        return res.json(JSON.parse(response.choices[0].message.content));
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "You are a medical data extraction assistant that outputs only valid JSON." },
+          { role: "user", content: text }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2
+      });
+      
+      return res.json(JSON.parse(response.choices[0].message.content));
       } catch (openaiError) {
         console.error("OpenAI API error:", openaiError);
         return res.status(500).json({ error: "AI processing error", details: openaiError.message });
@@ -154,21 +154,21 @@ app.post('/api/analyze-report', async (req, res) => {
     // Handle image-based analysis
     if (isImageAnalysis && imageUrl) {
       try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4-vision-preview",
-          messages: [
-            { 
-              role: "user", 
-              content: [
-                { type: "text", text: text },
-                { type: "image_url", image_url: { url: imageUrl } }
-              ]
-            }
-          ],
-          max_tokens: 1000
-        });
-        
-        return res.json(JSON.parse(response.choices[0].message.content));
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          { 
+            role: "user", 
+            content: [
+              { type: "text", text: text },
+              { type: "image_url", image_url: { url: imageUrl } }
+            ]
+          }
+        ],
+        max_tokens: 1000
+      });
+      
+      return res.json(JSON.parse(response.choices[0].message.content));
       } catch (openaiError) {
         console.error("OpenAI Vision API error:", openaiError);
         return res.status(500).json({ error: "AI image processing error", details: openaiError.message });
@@ -190,7 +190,7 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    
+
     filePath = req.file.path;
     const file = req.file;
     
@@ -205,20 +205,20 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
     let textExtractionMethod = '';
 
     try {
-      // Extract text based on file type
-      if (file.mimetype === 'application/pdf') {
+    // Extract text based on file type
+    if (file.mimetype === 'application/pdf') {
         textExtractionMethod = 'pdf-parse';
-        const dataBuffer = fs.readFileSync(file.path);
-        const data = await pdfParse(dataBuffer);
-        textContent = data.text;
-      } else if (file.mimetype.startsWith('image/')) {
+      const dataBuffer = fs.readFileSync(file.path);
+      const data = await pdfParse(dataBuffer);
+      textContent = data.text;
+    } else if (file.mimetype.startsWith('image/')) {
         textExtractionMethod = 'image processing disabled';
-        return res.status(400).json({
-          error: 'Image processing is temporarily unavailable. Please use PDF files for now.'
-        });
-      } else {
+      return res.status(400).json({
+        error: 'Image processing is temporarily unavailable. Please use PDF files for now.'
+      });
+    } else {
         textExtractionMethod = 'plain text';
-        textContent = fs.readFileSync(file.path, 'utf8');
+      textContent = fs.readFileSync(file.path, 'utf8');
       }
     } catch (extractionError) {
       console.error('Text extraction error:', extractionError);
@@ -234,7 +234,7 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
         error: 'No text content could be extracted from the file' 
       });
     }
-    
+
     // Truncate text to reduce token usage (first 2000 characters should be enough for most reports)
     const textLength = textContent.length;
     const truncatedText = textContent.substring(0, 2000);
@@ -242,20 +242,20 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
     console.log(`Text extraction method: ${textExtractionMethod}`);
 
     try {
-      // More focused, efficient prompt to reduce token usage
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo", // Use 3.5-turbo instead of 4 to reduce cost
-        messages: [
-          {
-            role: "system",
-            content: `You are a medical document analyzer specializing in extracting clinical data.
-            When analyzing documents, focus on finding:
-            - Lab values with their reference ranges
-            - Vital signs (BP, HR, temperature)
-            - Diagnoses with ICD codes if present
-            - Medication names and dosages
-            - Follow-up recommendations
-            
+    // More focused, efficient prompt to reduce token usage
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // Use 3.5-turbo instead of 4 to reduce cost
+      messages: [
+        {
+          role: "system",
+          content: `You are a medical document analyzer specializing in extracting clinical data.
+          When analyzing documents, focus on finding:
+          - Lab values with their reference ranges
+          - Vital signs (BP, HR, temperature)
+          - Diagnoses with ICD codes if present
+          - Medication names and dosages
+          - Follow-up recommendations
+          
             Return a JSON object with these fields:
             - parameters: an object with key-value pairs for lab values and vital signs
             - conditions: an array of medical conditions mentioned
@@ -265,17 +265,17 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
             
             Always include these fields in your response even if values are not found.
             If a field has no values, use an empty object, array, or string as appropriate.`
-          },
-          {
-            role: "user",
-            content: `Analyze this medical document and extract all possible information:
-            ${truncatedText}`
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.1, // Lower temperature for more deterministic results
-        max_tokens: 500 // Limit output tokens to reduce cost
-      });
+        },
+        {
+          role: "user",
+          content: `Analyze this medical document and extract all possible information:
+          ${truncatedText}`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1, // Lower temperature for more deterministic results
+      max_tokens: 500 // Limit output tokens to reduce cost
+    });
 
       // Parse and validate response
       let result;
@@ -315,9 +315,9 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
               .map(item => typeof item === 'object' ? JSON.stringify(item) : String(item));
           }
         });
-        
-        console.log("OpenAI Response Structure:", 
-          Object.keys(result), 
+
+    console.log("OpenAI Response Structure:", 
+      Object.keys(result), 
           "Contains parameters:", typeof result.parameters === 'object',
           "Contains aiAnalysis:", typeof result.aiAnalysis === 'object'
         );
@@ -328,7 +328,7 @@ app.post('/api/process-file', upload.single('file'), handleMulterError, async (r
         // Create a default response structure
         result = {
           parameters: {},
-          aiAnalysis: {
+      aiAnalysis: {
             conditions: [],
             medications: [],
             recommendations: "Unable to process content.",
@@ -375,17 +375,17 @@ app.post('/api/health-recommendations', async (req, res) => {
     }
     
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: "You are a health recommendations assistant that outputs only valid JSON." },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2
-      });
-      
-      res.json(JSON.parse(response.choices[0].message.content));
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a health recommendations assistant that outputs only valid JSON." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2
+    });
+    
+    res.json(JSON.parse(response.choices[0].message.content));
     } catch (openaiError) {
       console.error("OpenAI API error:", openaiError);
       res.status(500).json({ error: "AI processing error", details: openaiError.message });

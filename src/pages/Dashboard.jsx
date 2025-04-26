@@ -1,55 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../utils/main';
+import { supabase } from '../utils/supabaseClient';
 import '../dashboardstyle.css'; // Dashboard-specific styles
-import { setupMenuListeners } from '../utils/menuHandlers';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Spinner from '../components/Spinner'; // Import Spinner component
+import EmergencyQRCode from '../components/EmergencyQRCode'; // Import EmergencyQRCode
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import {
-  FaHeartbeat,
-  FaPills,
-  FaCalendarAlt,
-  FaFileMedical,
-  FaUserMd,
-  FaVideo,
-  FaChartLine,
-  FaBell,
-  FaExclamationTriangle,
-  FaCheckCircle,
-  FaQrcode,
-  FaSyringe,
-  FaStethoscope,
-  FaBone,
-  FaAmbulance,
-  FaRobot,
-  FaBrain
-} from 'react-icons/fa';
-import { Line, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { Col, Card, Button, Row } from 'react-bootstrap';
+import { FaQrcode, FaEdit, FaInfoCircle } from 'react-icons/fa';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -180,7 +139,7 @@ const Dashboard = () => {
     if (error) return <div className="alert alert-danger">{error}</div>;
 
     return (
-        <div className="dashboard container-fluid py-4" >
+        <div className="container-fluid py-4" >
             <div className="row mb-4">
                 <div className="col">
                     <h1 className="h3">Welcome, {healthData.profile?.first_name || 'User'}!</h1>
@@ -188,27 +147,85 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Main Features Section */}
-            <div className="row mb-4"></div>
-            <h4 className="mb-3">Main Features</h4>
+            {/* Main Features Section and Emergency QR Code in a row */}
             <div className="row g-4 mb-5">
-                {mainFeatureCards.map((card, index) => (
+            <h4 className="mb-3">Main Features</h4>
+                {/* First 3 main feature cards */}
+                {mainFeatureCards.slice(0, 3).map((card, index) => (
                     <div key={index} className="col-12 col-md-6 col-lg-3">
-                        <Link to={card.link} className="text-decoration-none">
-                            <div className={`card h-100 border-${card.color} shadow-sm hover-card`}>
-                                <div className="card-body">
-                                    <div className="d-flex align-items-center mb-3">
+                        <Link to={card.link} className="text-decoration-none h-100">
+                            <div className={`card hover-card border-${card.color} h-100`}>
+                                <div className="card-body d-flex flex-column">
+                                    <div className="d-flex align-items-center mb-2">
                                         <div className={`icon-circle bg-${card.color} text-white`}>
                                             <i className={`fas ${card.icon}`}></i>
                                         </div>
                                         <h5 className="card-title mb-0 ms-3">{card.title}</h5>
                                     </div>
-                                    <p className="card-text text-muted">{card.description}</p>
+                                    <p className="card-text text-muted flex-grow-1">{card.description}</p>
                                 </div>
                             </div>
                         </Link>
                     </div>
                 ))}
+
+                {/* Emergency QR Code */}
+                <div className="col-12 col-md-6 col-lg-3">
+                    <Card className="hover-card border-danger h-100">
+                        <Card.Body className="d-flex flex-column">
+                            <div className="d-flex align-items-center mb-2">
+                                <div className="icon-circle bg-danger text-white">
+                                    <FaQrcode />
+                                </div>
+                                <h5 className="card-title mb-0 ms-3">Emergency QR</h5>
+                            </div>
+                            <div className="d-flex flex-column align-items-center justify-content-center flex-grow-1">
+                                {user ? (
+                                    <>
+                                        <EmergencyQRCode 
+                                            size={110} 
+                                            showDownloadButton={false} 
+                                            showHeader={false}
+                                            showOptions={false}
+                                            showCard={false}
+                                            onClick={() => navigate('/profile?section=emergency-qr')}
+                                        />
+                                        {/* <p className="text-muted small mt-2 text-center">Click to view emergency QR</p> */}
+                                    </>
+                                ) : (
+                                    <div className="text-center">
+                                        <Spinner animation="border" role="status" size="sm">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </Spinner>
+                                        <p className="text-muted small mt-2">Loading user data...</p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </div>
+            </div>
+
+            {/* 4th main feature card moved to next row */}
+            <div className="row g-4 mb-5">
+                <div className="col-12 col-md-6 col-lg-3">
+                    <Link to={mainFeatureCards[3].link} className="text-decoration-none h-100">
+                        <div className={`card hover-card border-${mainFeatureCards[3].color} h-100`}>
+                            <div className="card-body d-flex flex-column">
+                                <div className="d-flex align-items-center mb-2">
+                                    <div className={`icon-circle bg-${mainFeatureCards[3].color} text-white`}>
+                                        <i className={`fas ${mainFeatureCards[3].icon}`}></i>
+                                    </div>
+                                    <h5 className="card-title mb-0 ms-3">{mainFeatureCards[3].title}</h5>
+                                </div>
+                                <p className="card-text text-muted flex-grow-1">{mainFeatureCards[3].description}</p>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+
+                {/* This div is intentionally left empty for grid balance */}
+                <div className="col-12 col-md-6 col-lg-9"></div>
             </div>
 
             {/* AI Features Section */}
@@ -216,58 +233,21 @@ const Dashboard = () => {
             <div className="row g-4 mb-5">
                 {aiFeatureCards.map((card, index) => (
                     <div key={index} className="col-12 col-md-6 col-lg-3">
-                        <Link to={card.link} className="text-decoration-none">
-                            <div className={`card h-100 border-${card.color} shadow-sm hover-card`}>
-                                <div className="card-body">
-                                    <div className="d-flex align-items-center mb-3">
+                        <Link to={card.link} className="text-decoration-none h-100">
+                            <div className={`card hover-card border-${card.color} h-100`}>
+                                <div className="card-body d-flex flex-column">
+                                    <div className="d-flex align-items-center mb-2">
                                         <div className={`icon-circle bg-${card.color} text-white`}>
                                             <i className={`fas ${card.icon}`}></i>
                                         </div>
                                         <h5 className="card-title mb-0 ms-3">{card.title}</h5>
                                     </div>
-                                    <p className="card-text text-muted">{card.description}</p>
+                                    <p className="card-text text-muted flex-grow-1">{card.description}</p>
                                 </div>
                             </div>
                         </Link>
                     </div>
                 ))}
-            </div>
-
-            {/* Quick Actions Section */}
-            <div className="row mt-4">
-                <div className="col-12">
-                    <div className="card">
-                        <div className="card-body">
-                            <h5 className="card-title">Quick Actions</h5>
-                            <div className="row g-2">
-                                <div className="col-6 col-md-3">
-                                    <Link to="/appointments/new" className="btn btn-outline-primary w-100">
-                                        <i className="fas fa-plus-circle me-2"></i>
-                                        New Appointment
-                                    </Link>
-                                </div>
-                                <div className="col-6 col-md-3">
-                                    <Link to="/medications/add" className="btn btn-outline-success w-100">
-                                        <i className="fas fa-pills me-2"></i>
-                                        Add Medication
-                                    </Link>
-                                </div>
-                                <div className="col-6 col-md-3">
-                                    <Link to="/reports/upload" className="btn btn-outline-info w-100">
-                                        <i className="fas fa-upload me-2"></i>
-                                        Upload Report
-                                    </Link>
-                                </div>
-                                <div className="col-6 col-md-3">
-                                    <Link to="/ai/health-assistant" className="btn btn-outline-danger w-100">
-                                        <i className="fas fa-robot me-2"></i>
-                                        AI Assistant
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

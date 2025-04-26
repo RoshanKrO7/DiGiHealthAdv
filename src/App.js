@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -38,7 +38,13 @@ import HealthRecommendations from './pages/ai/HealthRecommendations';
 
 function App() {
   return (
-    <Router>
+    <Router 
+      basename="/DiGiHealthAdv"
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <AuthProvider>
         <ToastContainer
           position="top-right"
@@ -51,6 +57,8 @@ function App() {
           draggable
           pauseOnHover
           theme="colored"
+          transition="Bounce"
+          limit={3}
         />
         <Routes>
           <Route path="/" element={<Login />} />

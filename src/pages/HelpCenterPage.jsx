@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../utils/main';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,11 +15,7 @@ const HelpCenterPage = () => {
   const [notification, setNotification] = useState(null);
   const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    fetchHelpCenterData();
-  }, []);
-
-  const fetchHelpCenterData = async () => {
+  const fetchHelpCenterData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -63,7 +59,11 @@ const HelpCenterPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchHelpCenterData();
+  }, [fetchHelpCenterData]);
 
   // Static data as fallback
   const staticFaqs = [

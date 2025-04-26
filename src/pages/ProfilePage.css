@@ -2,7 +2,7 @@
 .profile-page {
   padding: 2rem;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: #f8f9fa00;
 }
 
 .profile-sidebar {
@@ -144,4 +144,68 @@
     width: 120px;
     height: 120px;
   }
+}
+
+/* QR code section styling */
+.emergency-qr-section .qrcode-container {
+  margin: 1.5rem auto;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 1rem !important;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.emergency-qr-section .qrcode-container:hover {
+  border-color: var(--primary-color, #0d6efd);
+  box-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
+}
+
+/* Ensure proper spacing and padding for the QR code display */
+.emergency-qr-section .card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Custom styling for the alert in the QR code section */
+.emergency-qr-section .alert-info {
+  border-left: 4px solid #0dcaf0;
+  background-color: rgba(13, 202, 240, 0.1);
+}
+
+/* Privacy note styling */
+.emergency-qr-section .mt-4 .text-muted {
+  font-size: 0.9rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+/* Make the QR code options area more appealing */
+.emergency-qr-section .form-check {
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Add pulse animation for the QR code to draw attention */
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+  }
+}
+
+.emergency-qr-section .qrcode-container {
+  animation: pulse-border 2s infinite;
+}
+
+.emergency-qr-section .qrcode-container:hover {
+  animation: none;
 }

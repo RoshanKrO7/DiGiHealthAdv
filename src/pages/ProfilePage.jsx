@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getUserProfile, updateUserProfile, getDiseaseNames, addDiseaseName, getParameters, addParameter, getAllergies, getCommonDiseases } from '../utils/api';
-import {supabase} from '../utils/main';
+import { supabase } from '../utils/supabaseClient';
 import Spinner from '../components/Spinner';
+import EmergencyQRCode from '../components/EmergencyQRCode';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './ProfilePage.css';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState({
@@ -40,18 +41,25 @@ const ProfilePage = () => {
   const [newAllergy, setNewAllergy] = useState({ name: '', severity: 'mild' });
   const [commonDiseases, setCommonDiseases] = useState([]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+    fetchDiseases();
+    fetchAllergies();
+    fetchParameters();
+    
+    // Check for URL parameters
+    const queryParams = new URLSearchParams(window.location.search);
+    const section = queryParams.get('section');
+    if (section) {
+        setActiveSection(section);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (activeSection === 'diseases') {
-      fetchDiseases();
       fetchCommonDiseases();
-      fetchAllergies();
-    } else if (activeSection === 'parameters') {
-      fetchParameters();
     }
   }, [activeSection]);
 
@@ -524,6 +532,12 @@ const ProfilePage = () => {
               >
                 <i className="fas fa-chart-line me-2"></i> Health Parameters
               </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'emergency-qr' ? 'active' : ''}`}
+                onClick={() => setActiveSection('emergency-qr')}
+              >
+                <i className="fas fa-qrcode me-2"></i> Emergency QR Code
+              </button>
             </div>
           </div>
         </div>
@@ -844,7 +858,31 @@ const ProfilePage = () => {
                 </div>
               )}
 
-              {editing && (
+              {activeSection === 'emergency-qr' && (
+                <div className="emergency-qr-section">
+                  <h4 className="card-title mb-4">Emergency Medical QR Code</h4>
+                  <div className="row">
+                    <div className="col-md-8 offset-md-2">
+                      <div className="alert alert-info">
+                        <i className="fas fa-info-circle me-2"></i>
+                        This QR code contains your essential medical information for emergency situations. 
+                        Keep it accessible, such as in your wallet, on your phone, or on emergency medical ID.
+                      </div>
+                      <EmergencyQRCode size={180} />
+                      <div className="mt-4">
+                        <p className="text-muted">
+                          <i className="fas fa-shield-alt me-2"></i>
+                          <strong>Privacy Note:</strong> The QR code is updated automatically when you change your 
+                          profile information, allergies, or medical conditions. The information included in the 
+                          QR code is limited to what would be helpful in a medical emergency.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {editing && activeSection !== 'emergency-qr' && activeSection !== 'parameters' && activeSection !== 'diseases' && (
                 <div className="mt-4 text-end">
                   <button onClick={handleSave} className="btn btn-success">
                     Save Changes

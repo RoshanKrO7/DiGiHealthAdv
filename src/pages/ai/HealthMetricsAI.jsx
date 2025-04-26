@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../utils/supabaseClient';
 import Spinner from '../../components/Spinner';
 
@@ -8,11 +8,8 @@ const HealthMetricsAI = () => {
   const [metrics, setMetrics] = useState(null);
   const [analysis, setAnalysis] = useState(null);
 
-  useEffect(() => {
-    fetchHealthMetrics();
-  }, []);
-
-  const fetchHealthMetrics = async () => {
+  // Use useCallback to memoize the function so it can be safely added to dependencies
+  const fetchHealthMetrics = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user logged in');
@@ -45,7 +42,11 @@ const HealthMetricsAI = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);  // Empty dependency array since it doesn't depend on any props or state
+
+  useEffect(() => {
+    fetchHealthMetrics();
+  }, [fetchHealthMetrics]);  // Added fetchHealthMetrics as a dependency
 
   const analyzeMetrics = (metrics) => {
     // This is where you would implement AI analysis of the metrics

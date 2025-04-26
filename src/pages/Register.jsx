@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import { FaUser, FaEnvelope, FaLock, FaUserMd } from 'react-icons/fa';
+import './Auth.css';
 
 const Register = () => {
   const navigate = useNavigate();

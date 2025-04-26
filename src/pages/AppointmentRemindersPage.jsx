@@ -233,61 +233,24 @@ const AppointmentRemindersPage = () => {
   };
 
   const deleteReminder = async (reminderId) => {
-    if (!window.confirm('Are you sure you want to delete this reminder?')) return;
-    
     try {
       setLoading(true);
       
-      // Get the reminder to find the associated appointment
-      const { data: reminderData, error: fetchError } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('id', reminderId)
-        .single();
-        
-      if (fetchError) throw fetchError;
-      
-      // Update the appointment to remove the reminder flag
-      if (reminderData.appointment_type === 'appointment') {
-        const { error } = await supabase
-          .from('appointments')
-          .update({ reminder_set: false })
-          .eq('id', reminderData.appointment_id);
-          
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('telehealth_consultations')
-          .update({ reminder_set: false })
-          .eq('id', reminderData.appointment_id);
-          
-        if (error) throw error;
-      }
-      
-      // Delete the reminder
-      const { error: deleteError } = await supabase
-        .from('reminders')
+      const { error } = await supabase
+        .from('appointment_reminders')
         .delete()
         .eq('id', reminderId);
         
-      if (deleteError) throw deleteError;
+      if (error) throw error;
       
+      setReminders(reminders.filter(r => r.id !== reminderId));
       setNotification({ message: 'Reminder deleted successfully!', type: 'success' });
-      
-      // Refresh data
-      fetchData();
     } catch (error) {
       console.error('Error deleting reminder:', error);
       setNotification({ message: 'Error deleting reminder.', type: 'danger' });
     } finally {
       setLoading(false);
     }
-  };
-
-  // Format date and time for display
-  const formatDateTime = (date, time) => {
-    const dateObj = new Date(`${date}T${time}`);
-    return dateObj.toLocaleString();
   };
 
   // Check if an appointment is today

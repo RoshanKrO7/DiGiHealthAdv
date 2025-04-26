@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/main';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  FaChartLine, FaBrain, FaHeartbeat, FaFileMedical,
-  FaRobot, FaHistory, FaChartPie, FaChartBar
+  FaChartLine, FaBrain, FaFileMedical,
+  FaRobot
 } from 'react-icons/fa';
 import {
   Line, Bar, Pie, Radar

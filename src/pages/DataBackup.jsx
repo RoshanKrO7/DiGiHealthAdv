@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import { FaDownload, FaUpload, FaHistory, FaTrash, FaFileAlt } from 'react-icons/fa';
+import { FaDownload, FaUpload, FaHistory } from 'react-icons/fa';
 
 const DataBackup = () => {
   const [backupHistory, setBackupHistory] = useState([]);

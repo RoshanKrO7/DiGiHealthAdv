@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
+const { supabase } = require('./supabaseClient');
 
 // Initialize the Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
@@ -7,8 +7,6 @@ const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase credentials. Please check your .env file.');
 }
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
  * Create the execute_sql function in Supabase

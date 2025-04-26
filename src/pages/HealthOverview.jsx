@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Form, Card, Container, Row, Col } from 'react-bootstrap';
-import { supabase } from '../utils/main';
+import { supabase } from '../utils/supabaseClient';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
 
 const styles = {
   actionButton: {
@@ -15,7 +16,6 @@ const styles = {
 const HealthOverview = () => {
   const [healthData, setHealthData] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [userDetails, setUserDetails] = useState({ first_name: '', last_name: '', email: '' });
   const [showModal, setShowModal] = useState(false);
   const [newReport, setNewReport] = useState({ 
     disease_id: '', 
@@ -27,57 +27,42 @@ const HealthOverview = () => {
   const [notificationTimeout, setNotificationTimeout] = useState(null);
   const [loading, setLoading] = useState(false);
   const [userDiseases, setUserDiseases] = useState([]);
-  const [userParameters, setUserParameters] = useState([]);
   const [extractedParameters, setExtractedParameters] = useState({});
 
   // Add these state variables for confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) return;
-      if (user) {
-        setUserId(user.id);
-        fetchHealthData(user.id);
-        fetchUserDetails(user.id);
-        fetchUserDiseases(user.id);
-        fetchUserParameters(user.id);
-      }
-      setLoading(false);
-    };
+  const navigate = useNavigate();
 
-    fetchUser();
-  }, []);
+  // Define showNotification with useCallback
+  const showNotification = useCallback((message, type = 'info', duration = 5000) => {
+    // Clear any existing timeout
+    if (notificationTimeout) {
+      clearTimeout(notificationTimeout);
+      setNotificationTimeout(null);
+    }
 
-  const fetchUserDiseases = async (uid) => {
+    setNotification({ message, type });
+    
+    // Set timeout to clear notification
+    const timeout = setTimeout(() => {
+      setNotification(null);
+      setNotificationTimeout(null);
+    }, duration);
+    
+    setNotificationTimeout(timeout);
+  }, [notificationTimeout]);
+
+  const fetchUserDiseases = useCallback(async (uid) => {
     const { data, error } = await supabase
       .from('user_diseases')
       .select('*')
       .eq('user_id', uid);
     if (!error) setUserDiseases(data);
-  };
+  }, []);
 
-  const fetchUserParameters = async (uid) => {
-    const { data, error } = await supabase
-      .from('user_parameters')
-      .select('*')
-      .eq('user_id', uid);
-    if (!error) setUserParameters(data);
-  };
-
-  const fetchUserDetails = async (uid) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('first_name, last_name, email')
-      .eq('id', uid)
-      .single();
-    if (!error) setUserDetails(data);
-  };
-
-  const fetchHealthData = async (uid) => {
+  const fetchHealthData = useCallback(async (uid) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -101,7 +86,23 @@ const HealthOverview = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setLoading(true);
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) return;
+      if (user) {
+        setUserId(user.id);
+        fetchHealthData(user.id);
+        fetchUserDiseases(user.id);
+      }
+      setLoading(false);
+    };
+
+    fetchUser();
+  }, [fetchHealthData, fetchUserDiseases]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -208,8 +209,8 @@ const HealthOverview = () => {
       let result;
       try {
         result = await response.json();
-        console.log('Backend response:', result);
-        
+      console.log('Backend response:', result);
+
         // Log the structure of the response for debugging
         console.log('Response structure details:', {
           hasParameters: Boolean(result.parameters),
@@ -298,9 +299,9 @@ const HealthOverview = () => {
           result.aiAnalysis.recommendations = String(result.aiAnalysis.recommendations || '');
         } else if (result) {
           // Create default aiAnalysis if missing
-          result.aiAnalysis = {
-            conditions: [],
-            medications: [],
+        result.aiAnalysis = {
+          conditions: [],
+          medications: [],
             recommendations: '',
             summary: ''
           };
@@ -398,7 +399,6 @@ const HealthOverview = () => {
       const fileExt = newReport.file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       
-      console.log('Uploading file to Supabase storage:', fileName);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('health-reports')
         .upload(fileName, newReport.file);
@@ -412,20 +412,19 @@ const HealthOverview = () => {
       const { data: { publicUrl } } = supabase.storage
         .from('health-reports')
         .getPublicUrl(fileName);
-      
-      console.log('File uploaded successfully, public URL:', publicUrl);
   
       // Insert report into healthrecords
       const reportData = {
-        user_id: userId,
-        disease_id: newReport.disease_id,
-        since: newReport.since,
-        document_url: publicUrl,
-        created_at: new Date().toISOString(),
-        ai_summary: extractedParameters?.aiAnalysis?.summary || null
+          user_id: userId,
+          disease_id: newReport.disease_id,
+          since: newReport.since,
+          document_url: publicUrl,
+          created_at: new Date().toISOString(),
+        ai_summary: extractedParameters?.aiAnalysis?.summary ? 
+          String(extractedParameters.aiAnalysis.summary).substring(0, 255) : 
+          'No summary available'
       };
       
-      console.log('Inserting report data:', reportData);
       const { data: insertedReport, error: reportError } = await supabase
         .from('healthrecords')
         .insert([reportData])
@@ -436,16 +435,6 @@ const HealthOverview = () => {
         console.error('Error inserting report data:', reportError);
         throw new Error(`Error saving report: ${reportError.message}`);
       }
-      
-      console.log('Report inserted successfully:', insertedReport);
-  
-      // Only continue if we have a valid report ID
-      if (!insertedReport || !insertedReport.id) {
-        throw new Error('Failed to get report ID from database');
-      }
-      
-      let hasErrors = false;
-      let errorDetails = [];
   
       // Save extracted parameters if any
       if (extractedParameters?.parameters && Object.keys(extractedParameters.parameters).length > 0) {
@@ -453,93 +442,79 @@ const HealthOverview = () => {
           user_id: userId,
           record_id: insertedReport.id,
           parameter_name: key,
-          parameter_value: typeof value === 'object' ? JSON.stringify(value) : String(value || "N/A"),
+          parameter_value: typeof value === 'object' ? 
+            JSON.stringify(value).substring(0, 255) : 
+            String(value || "N/A").substring(0, 255),
           created_at: new Date().toISOString()
         }));
         
-        console.log('Saving parameters:', parameterData.length);
         const { error: paramError } = await supabase
           .from('health_parameters')
           .insert(parameterData);
       
         if (paramError) {
           console.error('Error saving parameters:', paramError);
-          hasErrors = true;
-          errorDetails.push(`Parameters: ${paramError.message}`);
+          // Continue with other operations even if parameter saving fails
         }
-      } else {
-        console.log('No parameters to save');
       }
   
       // Save conditions if any
       if (extractedParameters?.aiAnalysis?.conditions?.length > 0) {
         const conditionData = extractedParameters.aiAnalysis.conditions
-          .filter(condition => condition && condition.trim()) // Filter out empty strings
+          .filter(condition => condition && condition.trim())
           .map(condition => ({
             record_id: insertedReport.id,
-            condition_name: condition.trim(),
+            condition_name: String(condition).substring(0, 255),
             user_id: userId,
             created_at: new Date().toISOString()
           }));
         
-        console.log('Saving conditions:', conditionData.length);
         const { error: condError } = await supabase
           .from('report_conditions')
           .insert(conditionData);
       
         if (condError) {
           console.error('Error saving conditions:', condError);
-          hasErrors = true;
-          errorDetails.push(`Conditions: ${condError.message}`);
+          // Continue with other operations even if conditions saving fails
         }
-      } else {
-        console.log('No conditions to save');
       }
       
       // Save medications if any
       if (extractedParameters?.aiAnalysis?.medications?.length > 0) {
         const medicationData = extractedParameters.aiAnalysis.medications
-          .filter(medication => medication && medication.trim()) // Filter out empty strings
+          .filter(medication => medication && medication.trim())
           .map(medication => ({
             record_id: insertedReport.id,
-            medication_name: medication.trim(),
-            user_id: userId, // Add user_id here as well for consistency
+            medication_name: String(medication).substring(0, 255),
+            user_id: userId,
             created_at: new Date().toISOString()
           }));
         
-        console.log('Saving medications:', medicationData.length);
         const { error: medError } = await supabase
           .from('report_medications')
           .insert(medicationData);
       
         if (medError) {
           console.error('Error saving medications:', medError);
-          hasErrors = true;
-          errorDetails.push(`Medications: ${medError.message}`);
+          // Continue with other operations even if medications saving fails
         }
-      } else {
-        console.log('No medications to save');
       }
       
       // Save recommendations if any
       if (extractedParameters?.aiAnalysis?.recommendations) {
-        console.log('Saving recommendations');
         const { error: recError } = await supabase
           .from('report_recommendations')
           .insert([{
             record_id: insertedReport.id,
-            recommendation_text: extractedParameters.aiAnalysis.recommendations,
-            user_id: userId, // Add user_id here as well for consistency
+            recommendation_text: String(extractedParameters.aiAnalysis.recommendations).substring(0, 255),
+            user_id: userId,
             created_at: new Date().toISOString()
           }]);
       
         if (recError) {
           console.error('Error saving recommendations:', recError);
-          hasErrors = true;
-          errorDetails.push(`Recommendations: ${recError.message}`);
+          // Continue with other operations even if recommendations saving fails
         }
-      } else {
-        console.log('No recommendations to save');
       }
   
       // Refresh data
@@ -551,12 +526,7 @@ const HealthOverview = () => {
       setPreview(null);
       setExtractedParameters({});
       
-      // Show success notification with any partial errors
-      if (hasErrors) {
-        showNotification(`Report uploaded but some data couldn't be saved: ${errorDetails.join(', ')}`, 'warning');
-      } else {
-        showNotification('Report uploaded successfully!', 'success');
-      }
+      showNotification('Report uploaded successfully!', 'success');
       
     } catch (error) {
       console.error('Error uploading report:', error);
@@ -575,10 +545,10 @@ const HealthOverview = () => {
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      // First, get the report details to find related resources
+      // First, get the report details using the ID
       const { data: report, error: fetchError } = await supabase
         .from('healthrecords')
-        .select('*')
+        .select('document_url')
         .eq('id', reportToDelete)
         .single();
       
@@ -587,87 +557,16 @@ const HealthOverview = () => {
         throw new Error(`Error fetching report: ${fetchError.message}`);
       }
       
-      console.log('Report to delete:', report);
-      
-      // Delete related data first (due to foreign key constraints)
-      // Use explicit error logging for each deletion
-      
-      try {
-        const { error: paramError } = await supabase
-          .from('health_parameters')
-          .delete()
-          .eq('record_id', reportToDelete);
-        
-        if (paramError) console.error('Error deleting health parameters:', paramError);
-      } catch (error) {
-        console.error('Exception deleting health parameters:', error);
+      if (!report || !report.document_url) {
+        throw new Error('Report or document URL not found');
       }
-      
-      try {
-        const { error: condError } = await supabase
-          .from('report_conditions')
-          .delete()
-          .eq('record_id', reportToDelete);
-        
-        if (condError) console.error('Error deleting report conditions:', condError);
-      } catch (error) {
-        console.error('Exception deleting report conditions:', error);
-      }
-      
-      try {
-        const { error: medError } = await supabase
-          .from('report_medications')
-          .delete()
-          .eq('record_id', reportToDelete);
-        
-        if (medError) console.error('Error deleting report medications:', medError);
-      } catch (error) {
-        console.error('Exception deleting report medications:', error);
-      }
-      
-      try {
-        const { error: recError } = await supabase
-          .from('report_recommendations')
-          .delete()
-          .eq('record_id', reportToDelete);
-        
-        if (recError) console.error('Error deleting report recommendations:', recError);
-      } catch (error) {
-        console.error('Exception deleting report recommendations:', error);
-      }
-      
-      try {
-        const { error: aiError } = await supabase
-          .from('report_ai_analysis')
-          .delete()
-          .eq('report_id', reportToDelete);
-        
-        if (aiError) console.error('Error deleting AI analysis:', aiError);
-      } catch (error) {
-        console.error('Exception deleting AI analysis:', error);
-      }
-      
-      // Delete the storage file if it exists
-      if (report.document_url) {
-        try {
-          // Extract the file path from the URL
-          // URL format: https://[project-ref].supabase.co/storage/v1/object/public/health-reports/[userId]/[filename]
-          const fileName = report.document_url.split('/').pop();
-          
-          // Different approach to get the user folder
+
+      // Delete the file from storage first
           const pathMatch = report.document_url.match(/health-reports\/([^\/]+)\/([^\/]+)$/);
-          let storagePath;
-          
           if (pathMatch && pathMatch.length >= 3) {
             const userFolder = pathMatch[1];
-            const fileNameFromUrl = pathMatch[2];
-            storagePath = `${userFolder}/${fileNameFromUrl}`;
-          } else {
-            // Fallback approach
-            storagePath = `${userId}/${fileName}`;
-          }
-          
-          console.log('Attempting to delete file at path:', storagePath);
+        const fileName = pathMatch[2];
+        const storagePath = `${userFolder}/${fileName}`;
           
           const { error: storageError } = await supabase.storage
             .from('health-reports')
@@ -675,34 +574,23 @@ const HealthOverview = () => {
           
           if (storageError) {
             console.error('Error deleting file:', storageError);
-          } else {
-            console.log('File deleted successfully');
-          }
-        } catch (error) {
-          console.error('Exception during file deletion:', error);
-          // Continue with record deletion even if file deletion fails
+          throw new Error(`Error deleting file: ${storageError.message}`);
         }
       }
-      
-      // Finally delete the report record
+
+      // Then delete the record from the database
       const { error: deleteError } = await supabase
         .from('healthrecords')
         .delete()
         .eq('id', reportToDelete);
       
       if (deleteError) {
-        console.error('Error deleting healthrecord:', deleteError);
-        throw new Error(`Error deleting report: ${deleteError.message}`);
+        console.error('Error deleting record:', deleteError);
+        throw new Error(`Error deleting record: ${deleteError.message}`);
       }
-      
-      console.log('Report deleted successfully');
-      
-      // Manually remove from state for immediate UI update
-      setHealthData(healthData.filter(report => report.id !== reportToDelete));
-      
-      // Refresh data from the database
-      fetchHealthData(userId);
-      
+
+      // Update UI
+      setHealthData(prevData => prevData.filter(report => report.id !== reportToDelete));
       showNotification('Report deleted successfully', 'success');
     } catch (error) {
       console.error('Error in delete process:', error);
@@ -714,24 +602,6 @@ const HealthOverview = () => {
     }
   };
 
-  // Add a function to handle notifications
-  const showNotification = (message, type = 'info', duration = 5000) => {
-    // Clear any existing timeout
-    if (notificationTimeout) {
-      clearTimeout(notificationTimeout);
-    }
-    
-    // Set the notification
-    setNotification({ message, type });
-    
-    // Set a timeout to clear the notification
-    const timeout = setTimeout(() => {
-      setNotification(null);
-    }, duration);
-    
-    setNotificationTimeout(timeout);
-  };
-  
   // Clean up timeout on component unmount
   useEffect(() => {
     return () => {
@@ -805,31 +675,36 @@ const HealthOverview = () => {
         <Button variant="primary" onClick={() => setShowModal(true)}>+ Upload Report</Button>
       </div>
       
-      <Row>
+      <Row className="g-4">
         {healthData.map((report) => (
-          <Col md={3} sm={6} key={report.id} className="mb-3">
-            <Card className="shadow-sm border-0">
-              <Card.Body>
-                <Card.Title>Disease: {report.user_diseases?.disease_name}</Card.Title>
-                <Card.Text>Since: {report.since}</Card.Text>
-                <div className="d-flex justify-content-between">
+          <Col md={4} sm={6} key={report.id}>
+            <Card className="shadow-sm border-0 hover-card h-100">
+              <Card.Body className="p-4 d-flex flex-column">
+                <div className="d-flex align-items-center mb-3">
+                  <div className="icon-circle bg-primary text-white me-3">
+                    <i className="fas fa-file-medical"></i>
+                  </div>
+                  <div>
+                    <Card.Title className="mb-1">{report.user_diseases?.disease_name}</Card.Title>
+                    <Card.Text className="text-muted mb-0">Since: {new Date(report.since).toLocaleDateString()}</Card.Text>
+                  </div>
+                </div>
+                <div className="mt-auto pt-3 d-flex justify-content-end gap-2">
                   <Button 
-                    variant="danger" 
-                    size="md" 
-                    className='m-2' 
-                    style={styles.actionButton}
+                    variant="outline-danger" 
+                    size="sm" 
                     onClick={() => handleDeleteReport(report.id)}
+                    className="d-flex align-items-center"
                   >
-                    Delete
+                    <i className="fas fa-trash me-1"></i> Delete
                   </Button>
                   <Button 
-                    variant="info" 
-                    size="md" 
-                    className='m-2' 
-                    style={styles.actionButton}
+                    variant="outline-primary" 
+                    size="sm" 
                     onClick={() => window.open(report.document_url, '_blank')}
+                    className="d-flex align-items-center"
                   >
-                    View
+                    <i className="fas fa-eye me-1"></i> View
                   </Button>
                 </div>
               </Card.Body>
@@ -838,96 +713,146 @@ const HealthOverview = () => {
         ))}
       </Row>
       
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Upload New Report</Modal.Title>
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="md">
+        <Modal.Header closeButton className="border-bottom-0 pb-0">
+          <Modal.Title className="h4 fw-bold text-dark">Upload New Health Report</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="pt-4">
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Select Disease</Form.Label>
+              <Form.Label className="fw-bold d-flex align-items-center text-dark fs-6">
+                <i className="fas fa-disease me-2 text-primary"></i>
+                Select Health Condition
+              </Form.Label>
+              <div className="d-flex gap-2">
               <Form.Select 
                 value={newReport.disease_id}
-                onChange={(e) => setNewReport({ ...newReport, disease_id: e.target.value })}
+                  onChange={(e) => {
+                    if (e.target.value === 'add_new') {
+                      setShowModal(false);
+                      navigate('/profile');
+                    } else {
+                      setNewReport({ ...newReport, disease_id: e.target.value });
+                    }
+                  }}
                 required
+                  className="form-select"
               >
-                <option value="">Select a disease</option>
+                  <option value="">Choose a health condition</option>
                 {userDiseases.map((disease) => (
                   <option key={disease.id} value={disease.id}>
                     {disease.disease_name}
                   </option>
                 ))}
+                  <option value="add_new" className="text-primary">
+                    + Add New Condition
+                  </option>
               </Form.Select>
+                <Button 
+                  variant="outline-primary" 
+                  size="sm"
+                  onClick={() => {
+                    setShowModal(false);
+                    navigate('/profile');
+                  }}
+                  className="d-flex align-items-center"
+                >
+                  <i className="fas fa-plus me-1"></i> Add New
+                </Button>
+              </div>
+              <Form.Text className="text-muted small">
+                Select an existing condition or add a new one to your profile
+              </Form.Text>
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Since</Form.Label>
+              <Form.Label className="fw-bold d-flex align-items-center text-dark fs-6">
+                <i className="fas fa-calendar-alt me-2 text-primary"></i>
+                Report Date
+              </Form.Label>
               <Form.Control 
                 type="date" 
                 value={newReport.since}
                 onChange={(e) => setNewReport({ ...newReport, since: e.target.value })}
                 required
+                className="form-control"
               />
+              <Form.Text className="text-muted small">
+                When was this report created?
+              </Form.Text>
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Upload File</Form.Label>
+              <Form.Label className="fw-bold d-flex align-items-center text-dark fs-6">
+                <i className="fas fa-file-upload me-2 text-primary"></i>
+                Upload Report
+              </Form.Label>
+              <div className="border rounded p-3 text-center bg-light">
               <Form.Control 
                 type="file" 
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
                 onChange={handleFileChange}
                 required
-              />
+                  className="form-control"
+                  style={{ display: 'none' }}
+                  id="file-upload"
+                />
+                <label 
+                  htmlFor="file-upload" 
+                  className="btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center"
+                  style={{ minHeight: '120px', cursor: 'pointer' }}
+                >
+                  <i className="fas fa-cloud-upload-alt fa-2x mb-2 text-primary"></i>
+                  <span className="h6 mb-1 text-dark">Click to upload or drag and drop</span>
+                  <small className="text-muted">Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG</small>
+                </label>
+              </div>
+              <Form.Text className="text-muted small">
+                Upload your medical report or test results. Our AI will analyze the content automatically.
+              </Form.Text>
             </Form.Group>
-            {preview && <img src={preview} alt="Preview" className="img-fluid rounded mb-3" />}
 
-            {/* Show message if file was processed but no data extracted */}
-            {extractedParameters && 
-              (!extractedParameters.parameters || Object.keys(extractedParameters.parameters).length === 0) &&
-              (!extractedParameters.aiAnalysis || Object.keys(extractedParameters.aiAnalysis).length === 0) && (
-              <div className="alert alert-info mt-3">
-                <i className="bi bi-info-circle me-2"></i>
-                No parameters or analysis could be extracted from this document. 
-                You can still upload it for record-keeping.
-              </div>
-            )}
-            
-            {/* Display extracted parameters */}
-            {extractedParameters.parameters && Object.keys(extractedParameters.parameters).length > 0 && (
+            {preview && (
               <div className="mb-3">
-                <h5>Extracted Parameters:</h5>
-                <ul className="list-group">
-                  {Object.entries(extractedParameters.parameters).map(([name, value]) => (
-                    <li key={name} className="list-group-item">
-                      {name}: {typeof value === 'object' ? JSON.stringify(value) : String(value || 'N/A')}
-                    </li>
-                  ))}
-                </ul>
+                <Form.Label className="fw-bold d-flex align-items-center text-dark fs-6">
+                  <i className="fas fa-image me-2 text-primary"></i>
+                  Preview
+                </Form.Label>
+                <img src={preview} alt="Preview" className="img-fluid rounded shadow-sm" />
               </div>
             )}
 
-            {/* Display AI analysis */}
             {extractedParameters?.aiAnalysis ? (
               <div className="mb-3">
-                <h5>AI Analysis</h5>
-                <div className="card">
+                <h5 className="fw-bold mb-2 d-flex align-items-center text-dark fs-6">
+                  <i className="fas fa-robot me-2 text-primary"></i>
+                  AI Analysis
+                </h5>
+                <div className="card border-0 shadow-sm">
                   <div className="card-body">
-                    {/* Check if summary exists */}
                     {extractedParameters.aiAnalysis.summary ? (
                       <>
-                        <h6>Summary</h6>
-                        <p>{String(extractedParameters.aiAnalysis.summary)}</p>
+                        <h6 className="fw-bold mb-2 d-flex align-items-center text-dark fs-6">
+                          <i className="fas fa-file-alt me-2 text-primary"></i>
+                          Summary
+                        </h6>
+                        <p className="mb-3 text-dark">{String(extractedParameters.aiAnalysis.summary)}</p>
                       </>
                     ) : (
                       <p className="text-muted">No summary available for this document.</p>
                     )}
                     
-                    {/* Display conditions */}
                     {extractedParameters.aiAnalysis.conditions && 
                       extractedParameters.aiAnalysis.conditions.length > 0 && (
                       <>
-                        <h6 className="mt-3">Conditions Identified</h6>
-                        <ul className="list-group">
+                        <h6 className="fw-bold mb-2 d-flex align-items-center text-dark fs-6">
+                          <i className="fas fa-clipboard-list me-2 text-primary"></i>
+                          Conditions Identified
+                        </h6>
+                        <ul className="list-group list-group-flush mb-3">
                           {extractedParameters.aiAnalysis.conditions.map((condition, index) => (
-                            <li key={index} className="list-group-item list-group-item-info">
+                            <li key={index} className="list-group-item text-dark">
+                              <i className="fas fa-check-circle text-success me-2"></i>
                               {String(condition)}
                             </li>
                           ))}
@@ -935,14 +860,17 @@ const HealthOverview = () => {
                       </>
                     )}
                     
-                    {/* Display medications */}
                     {extractedParameters.aiAnalysis.medications && 
                       extractedParameters.aiAnalysis.medications.length > 0 && (
                       <>
-                        <h6 className="mt-3">Medications</h6>
-                        <ul className="list-group">
+                        <h6 className="fw-bold mb-2 d-flex align-items-center text-dark fs-6">
+                          <i className="fas fa-pills me-2 text-primary"></i>
+                          Medications
+                        </h6>
+                        <ul className="list-group list-group-flush mb-3">
                           {extractedParameters.aiAnalysis.medications.map((medication, index) => (
-                            <li key={index} className="list-group-item list-group-item-warning">
+                            <li key={index} className="list-group-item text-dark">
+                              <i className="fas fa-pills text-info me-2"></i>
                               {String(medication)}
                             </li>
                           ))}
@@ -950,11 +878,13 @@ const HealthOverview = () => {
                       </>
                     )}
                     
-                    {/* Display recommendations */}
                     {extractedParameters.aiAnalysis.recommendations && (
                       <>
-                        <h6 className="mt-3">Recommendations</h6>
-                        <p>{String(extractedParameters.aiAnalysis.recommendations)}</p>
+                        <h6 className="fw-bold mb-2 d-flex align-items-center text-dark fs-6">
+                          <i className="fas fa-lightbulb me-2 text-primary"></i>
+                          Recommendations
+                        </h6>
+                        <p className="text-dark">{String(extractedParameters.aiAnalysis.recommendations)}</p>
                       </>
                     )}
                   </div>
@@ -962,25 +892,65 @@ const HealthOverview = () => {
               </div>
             ) : null}
 
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Uploading...' : 'Upload Report'}
+            <div className="d-flex justify-content-end mt-3">
+              <Button 
+                type="submit" 
+                variant="primary" 
+                size="sm"
+                disabled={loading}
+                className="px-3 d-flex align-items-center"
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-upload me-2"></i>
+                    Upload Report
+                  </>
+                )}
             </Button>
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
 
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Delete</Modal.Title>
+        <Modal.Header closeButton className="border-bottom-0 pb-0">
+          <Modal.Title className="h4 fw-bold text-dark">Confirm Delete</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete this report?</p>
-          <div className="d-flex justify-content-end">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="me-2">
+        <Modal.Body className="pt-4">
+          <div className="text-center mb-4">
+            <i className="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+            <h5 className="fw-bold text-dark mb-3">Are you sure you want to delete this report?</h5>
+            <p className="text-dark">This action cannot be undone.</p>
+          </div>
+          <div className="d-flex justify-content-center gap-3">
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowDeleteModal(false)}
+              size="sm"
+              className="px-3"
+            >
               Cancel
             </Button>
-            <Button variant="danger" onClick={confirmDelete}>
-              Delete
+            <Button 
+              variant="danger" 
+              onClick={confirmDelete}
+              size="sm"
+              className="px-3 bg-danger text-white"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
             </Button>
           </div>
         </Modal.Body>

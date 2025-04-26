@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../utils/main';
+import { supabase } from '../utils/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { FaPaperPlane, FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaFile, FaImage } from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -12,6 +12,7 @@ const LiveChat = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [chatStatus, setChatStatus] = useState('connecting');
   const [supportAgent, setSupportAgent] = useState(null);
+  const [chatSubscription, setChatSubscription] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ const LiveChat = () => {
         chatSubscription.unsubscribe();
       }
     };
-  }, [user]);
+  }, [user, chatSubscription]);
 
   useEffect(() => {
     scrollToBottom();
@@ -74,7 +75,7 @@ const LiveChat = () => {
       setMessages(messagesData || []);
 
       // Subscribe to new messages
-      const chatSubscription = supabase
+      const subscription = supabase
         .channel('chat_messages')
         .on(
           'postgres_changes',
@@ -89,6 +90,8 @@ const LiveChat = () => {
           }
         )
         .subscribe();
+        
+      setChatSubscription(subscription);
 
       // Get support agent info
       const { data: agentData, error: agentError } = await supabase
@@ -115,7 +118,9 @@ const LiveChat = () => {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const sendMessage = async (e) => {

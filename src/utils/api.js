@@ -133,7 +133,7 @@ export const getCommonDiseases = async () => {
   return data;
 };
 
-export const handleProfilePictureUpload = async (e) => {
+export const handleProfilePictureUpload = async (e, setProfile) => {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -144,7 +144,7 @@ export const handleProfilePictureUpload = async (e) => {
   }
 
   const fileName = `${user.id}-${Date.now()}-${file.name}`;
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('profile-pictures')
     .upload(fileName, file);
 

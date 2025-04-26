@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../utils/main';
+import { supabase } from '../utils/supabaseClient';
 import Spinner from '../components/Spinner';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FaPhone, FaVideo, FaPlus, FaTrash, FaEdit, FaClock, FaUserMd, FaLink } from 'react-icons/fa';
