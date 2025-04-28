@@ -39,30 +39,30 @@ const MedicationTracker = () => {
     setHasLowStock(checkLowStock);
   }, [medications]);
 
-  const fetchMedications = async () => {
-    try {
+    const fetchMedications = async () => {
+      try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = '/';
-        return;
-      }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = '/';
+          return;
+        }
       
-      const { data, error } = await supabase
-        .from('medications')
-        .select('*')
+        const { data, error } = await supabase
+          .from('medications')
+          .select('*')
         .eq('user_id', user.id)
         .order('name', { ascending: true });
         
-      if (error) throw error;
+        if (error) throw error;
       setMedications(data || []);
-    } catch (error) {
-      console.error('Error fetching medications:', error);
+      } catch (error) {
+        console.error('Error fetching medications:', error);
       setNotification({ message: 'Error fetching medications.', type: 'danger' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const handleAddMedication = async (e) => {
     e.preventDefault();
@@ -252,7 +252,7 @@ const MedicationTracker = () => {
       med.remaining_tablets <= (med.dose_per_intake * med.times_per_day * 3)
     );
 
-    return (
+  return (
       <>
         {lowStockMeds.length > 0 && (
           <div className="upcoming-section mb-4">
@@ -377,8 +377,8 @@ const MedicationTracker = () => {
             <h4 className="form-section-title">
               <FaPills className="me-2 text-primary" /> Basic Information
             </h4>
-            <div className="row">
-              <div className="col-md-6 mb-3">
+        <div className="row">
+          <div className="col-md-6 mb-3">
                 <label htmlFor="medication_name" className="form-label text-dark">
                   <span className="text-danger">*</span> Medication Name
                 </label>
@@ -391,8 +391,8 @@ const MedicationTracker = () => {
                   placeholder="e.g., Paracetamol"
                   required 
                 />
-              </div>
-              <div className="col-md-6 mb-3">
+          </div>
+          <div className="col-md-6 mb-3">
                 <label htmlFor="total_tablets" className="form-label text-dark">
                   <span className="text-danger">*</span> Total Tablets
                 </label>
@@ -455,11 +455,11 @@ const MedicationTracker = () => {
                   value={newMedication.reminder_time}
                   onChange={(e) => setNewMedication(prev => ({ ...prev, reminder_time: e.target.value }))}
                 />
-              </div>
-            </div>
+          </div>
+        </div>
             
-            <div className="row">
-              <div className="col-md-6 mb-3">
+        <div className="row">
+          <div className="col-md-6 mb-3">
                 <label htmlFor="frequency" className="form-label text-dark">
                   Frequency
                 </label>
@@ -474,7 +474,7 @@ const MedicationTracker = () => {
                   <option value="thrice_week">Three Times a Week</option>
                   <option value="once_week">Once a Week</option>
                   <option value="alternate">Alternate Days</option>
-                </select>
+            </select>
               </div>
               {(newMedication.frequency === 'twice_week' || 
                 newMedication.frequency === 'thrice_week' || 
@@ -588,15 +588,15 @@ const MedicationTracker = () => {
             History for {activeMedication.name}
           </h3>
           <table className="history-table">
-            <thead>
-              <tr>
+        <thead>
+          <tr>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Status</th>
                 <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
+          </tr>
+        </thead>
+        <tbody>
               {history.length > 0 ? (
                 history.map((record) => (
                   <tr key={record.id}>
@@ -606,24 +606,24 @@ const MedicationTracker = () => {
                       <span className={`status-badge status-${record.status}`}>
                         {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                       </span>
-                    </td>
+              </td>
                     <td>{record.notes || '-'}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center">No history records found</td>
-                </tr>
+            </tr>
               )}
-            </tbody>
-          </table>
+        </tbody>
+      </table>
           <button
             className="btn btn-secondary mt-3"
             onClick={() => setShowHistory(false)}
           >
             Close History
           </button>
-        </div>
+    </div>
       )}
     </Container>
   );

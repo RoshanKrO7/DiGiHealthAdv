@@ -250,44 +250,46 @@ const Navbar = () => {
               <a href="#" data-link>AI Tools</a>
             </div>
             <div className="sub-menu double">
-              <div className="icon-box" id="ai-image-analysis" onClick={(e) => {
-                e.preventDefault();
-                navigate('/ai/image-analysis');
-              }}>
+              <div className="icon-box" id="ai-health-metrics" onClick={(e) => { e.preventDefault(); navigate('/ai/health-metrics'); }}>
+                <div className="icon"><i className="fa fa-chart-bar"></i></div>
+                <div className="text">
+                  <div className="title">Health Metrics AI</div>
+                  <div className="sub-text">Smart analysis of your health data</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-symptom-checker" onClick={(e) => { e.preventDefault(); navigate('/ai/symptom-checker'); }}>
+                <div className="icon"><i className="fa fa-stethoscope"></i></div>
+                <div className="text">
+                  <div className="title">Symptom Checker</div>
+                  <div className="sub-text">AI-powered symptom analysis</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-document-scanner" onClick={(e) => { e.preventDefault(); navigate('/ai/document-scanner'); }}>
+                <div className="icon"><i className="fa fa-file-medical-alt"></i></div>
+                <div className="text">
+                  <div className="title">Document Scanner</div>
+                  <div className="sub-text">Extract text from medical documents</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-medication-identifier" onClick={(e) => { e.preventDefault(); navigate('/ai/medication-identifier'); }}>
+                <div className="icon"><i className="fa fa-pills"></i></div>
+                <div className="text">
+                  <div className="title">Medication Identifier</div>
+                  <div className="sub-text">Identify pills from images</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-image-analysis" onClick={(e) => { e.preventDefault(); navigate('/ai/image-analysis'); }}>
                 <div className="icon"><i className="fa fa-microscope"></i></div>
                 <div className="text">
                   <div className="title">Medical Image Analysis</div>
                   <div className="sub-text">AI analysis of medical images</div>
                 </div>
               </div>
-              <div className="icon-box" id="ai-health-assistant" onClick={(e) => {
-                e.preventDefault();
-                navigate('/ai/health-assistant');
-              }}>
+              <div className="icon-box" id="ai-health-assistant" onClick={(e) => { e.preventDefault(); navigate('/ai/health-assistant'); }}>
                 <div className="icon"><i className="fa fa-robot"></i></div>
                 <div className="text">
                   <div className="title">Health Assistant</div>
-                  <div className="sub-text">Chat with our AI assistant</div>
-                </div>
-              </div>
-              <div className="icon-box" id="ai-recommendations" onClick={(e) => {
-                e.preventDefault();
-                navigate('/ai/health-recommendations');
-              }}>
-                <div className="icon"><i className="fa fa-lightbulb"></i></div>
-                <div className="text">
-                  <div className="title">Health Recommendations</div>
-                  <div className="sub-text">Get personalized health insights</div>
-                </div>
-              </div>
-              <div className="icon-box" id="ai-symptom-checker" onClick={(e) => {
-                e.preventDefault();
-                navigate('/ai/symptom-checker');
-              }}>
-                <div className="icon"><i className="fa fa-stethoscope"></i></div>
-                <div className="text">
-                  <div className="title">Symptom Checker</div>
-                  <div className="sub-text">AI-powered symptom analysis</div>
+                  <div className="sub-text">AI health chat assistant</div>
                 </div>
               </div>
             </div>

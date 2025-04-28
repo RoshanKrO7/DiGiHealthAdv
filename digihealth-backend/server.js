@@ -498,6 +498,46 @@ app.get('/api/test-response', (req, res) => {
   res.json(testResponse);
 });
 
+// Add vision analysis endpoint
+app.post('/api/vision-analyze', async (req, res) => {
+  try {
+    const { image, prompt } = req.body;
+    
+    if (!image) {
+      return res.status(400).json({ error: 'No image provided' });
+    }
+    
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              {
+                type: "image_url",
+                image_url: {
+                  url: image
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 1000
+      });
+      
+      return res.json({ result: response.choices[0].message.content });
+    } catch (openaiError) {
+      console.error("OpenAI Vision API error:", openaiError);
+      return res.status(500).json({ error: "AI image processing error", details: openaiError.message });
+    }
+  } catch (error) {
+    console.error("General error in vision-analyze:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

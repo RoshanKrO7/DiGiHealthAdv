@@ -384,9 +384,9 @@ const VaccinationHistoryPage = () => {
                       </div>
                     </>
                   )}
-                </div>
-              )}
-              
+        </div>
+      )}
+      
               {activeTab === 'form' && (
                 <div className="tab-pane active">
                   <div className="vaccine-form-card">
@@ -403,120 +403,120 @@ const VaccinationHistoryPage = () => {
                         <h4 className="form-section-title">
                           <FaShieldVirus className="me-2 text-primary" /> Basic Information
                         </h4>
-                        <div className="row">
-                          <div className="col-md-6 mb-3">
+          <div className="row">
+            <div className="col-md-6 mb-3">
                             <label htmlFor="vaccine_name" className="form-label text-dark">
                               <span className="text-danger">*</span> Vaccine Name
                             </label>
-                            <input 
-                              type="text" 
-                              className="form-control" 
-                              id="vaccine_name" 
-                              name="vaccine_name" 
-                              value={currentVaccination.vaccine_name} 
-                              onChange={handleChange} 
+              <input 
+                type="text" 
+                className="form-control" 
+                id="vaccine_name" 
+                name="vaccine_name" 
+                value={currentVaccination.vaccine_name} 
+                onChange={handleChange} 
                               placeholder="Enter vaccine name"
-                              required 
-                            />
+                required 
+              />
                             <small className="form-text text-muted">
                               <FaInfoCircle className="me-1" /> E.g., Influenza, COVID-19, Tetanus, HPV
                             </small>
-                          </div>
-                          <div className="col-md-6 mb-3">
+            </div>
+            <div className="col-md-6 mb-3">
                             <label htmlFor="date_administered" className="form-label text-dark">
                               <span className="text-danger">*</span> Date Administered
                             </label>
-                            <input 
-                              type="date" 
-                              className="form-control" 
-                              id="date_administered" 
-                              name="date_administered" 
-                              value={currentVaccination.date_administered} 
-                              onChange={handleChange} 
-                              required 
-                            />
+              <input 
+                type="date" 
+                className="form-control" 
+                id="date_administered" 
+                name="date_administered" 
+                value={currentVaccination.date_administered} 
+                onChange={handleChange} 
+                required 
+              />
                             <small className="form-text text-muted">
                               <FaCalendarAlt className="me-1" /> When was the vaccine administered?
                             </small>
                           </div>
-                        </div>
-                      </div>
-                      
+            </div>
+          </div>
+          
                       <div className="form-section">
                         <h4 className="form-section-title">
                           <FaUserMd className="me-2 text-primary" /> Additional Details
                         </h4>
-                        <div className="row">
-                          <div className="col-md-6 mb-3">
+          <div className="row">
+            <div className="col-md-6 mb-3">
                             <label htmlFor="administered_by" className="form-label text-dark">
                               <FaHospital className="me-1 text-primary" /> Healthcare Provider
                             </label>
-                            <input 
-                              type="text" 
-                              className="form-control" 
-                              id="administered_by" 
-                              name="administered_by" 
-                              value={currentVaccination.administered_by} 
-                              onChange={handleChange} 
+              <input 
+                type="text" 
+                className="form-control" 
+                id="administered_by" 
+                name="administered_by" 
+                value={currentVaccination.administered_by} 
+                onChange={handleChange} 
                               placeholder="Enter provider name or facility"
-                            />
+              />
                             <small className="form-text text-muted">
                               <FaInfoCircle className="me-1" /> Doctor, clinic, or healthcare facility
                             </small>
-                          </div>
-                          <div className="col-md-6 mb-3">
+            </div>
+            <div className="col-md-6 mb-3">
                             <label htmlFor="lot_number" className="form-label text-dark">
                               <FaInfoCircle className="me-1 text-primary" /> Lot Number
                             </label>
-                            <input 
-                              type="text" 
-                              className="form-control" 
-                              id="lot_number" 
-                              name="lot_number" 
-                              value={currentVaccination.lot_number} 
-                              onChange={handleChange} 
+              <input 
+                type="text" 
+                className="form-control" 
+                id="lot_number" 
+                name="lot_number" 
+                value={currentVaccination.lot_number} 
+                onChange={handleChange} 
                               placeholder="Enter vaccine lot number"
-                            />
+              />
                             <small className="form-text text-muted">
                               <FaInfoCircle className="me-1" /> Found on your vaccination card
                             </small>
-                          </div>
-                        </div>
-                        
-                        <div className="row">
-                          <div className="col-md-6 mb-3">
+            </div>
+          </div>
+          
+          <div className="row">
+            <div className="col-md-6 mb-3">
                             <label htmlFor="next_dose_date" className="form-label text-dark">
                               <FaCalendarCheck className="me-1 text-primary" /> Next Dose Date
                             </label>
-                            <input 
-                              type="date" 
-                              className="form-control" 
-                              id="next_dose_date" 
-                              name="next_dose_date" 
-                              value={currentVaccination.next_dose_date} 
-                              onChange={handleChange}
-                            />
+              <input 
+                type="date" 
+                className="form-control" 
+                id="next_dose_date" 
+                name="next_dose_date" 
+                value={currentVaccination.next_dose_date} 
+                onChange={handleChange} 
+              />
                             <small className="form-text text-muted">
                               <FaClock className="me-1" /> If another dose is required
                             </small>
-                          </div>
-                          <div className="col-md-6 mb-3">
+            </div>
+            <div className="col-md-6 mb-3">
                             <label htmlFor="notes" className="form-label text-dark">
                               <FaStickyNote className="me-1 text-primary" /> Notes
                             </label>
-                            <textarea 
-                              className="form-control" 
-                              id="notes" 
-                              name="notes" 
-                              rows="3" 
-                              value={currentVaccination.notes} 
-                              onChange={handleChange}
+              <textarea 
+                className="form-control" 
+                id="notes" 
+                name="notes" 
+                rows="3" 
+                value={currentVaccination.notes} 
+                onChange={handleChange}
                               placeholder="Any reactions, side effects, or important information"
-                            ></textarea>
+              ></textarea>
                           </div>
-                        </div>
-                      </div>
-                      
+            </div>
+          </div>
+          
                       <div className="form-actions">
                         <button type="submit" className="btn btn-primary btn-lg">
                           {isEditing ? (
@@ -524,12 +524,12 @@ const VaccinationHistoryPage = () => {
                           ) : (
                             <><FaPlus className="me-2" /> Save Record</>
                           )}
-                        </button>
-                        {isEditing && (
+            </button>
+            {isEditing && (
                           <button type="button" className="btn btn-secondary btn-lg ms-3" onClick={resetForm}>
-                            Cancel
-                          </button>
-                        )}
+                Cancel
+              </button>
+            )}
                         <button 
                           type="button" 
                           className="btn btn-light btn-lg ms-auto" 
@@ -537,10 +537,10 @@ const VaccinationHistoryPage = () => {
                         >
                           Back to Records
                         </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
+          </div>
+        </form>
+      </div>
+          </div>
               )}
             </div>
           </div>
@@ -550,7 +550,7 @@ const VaccinationHistoryPage = () => {
       {notification && (
         <div className={`alert alert-${notification.type} text-center alert-dismissible fade show`}>
           {notification.message}
-          <button 
+                    <button 
             type="button" 
             className="btn-close" 
             onClick={() => setNotification(null)}
@@ -697,7 +697,7 @@ const VaccinationHistoryPage = () => {
                 </Button>
               </div>
             </form>
-          </div>
+    </div>
         </Modal.Body>
       </Modal>
     </Container>

@@ -132,6 +132,20 @@ const Dashboard = () => {
             description: 'AI-powered symptom analysis',
             link: '/ai/symptom-checker',
             color: 'danger'
+        },
+        {
+            title: 'Document Scanner',
+            icon: 'fa-file-medical-alt',
+            description: 'Extract text from medical documents with AI',
+            link: '/ai/document-scanner',
+            color: 'warning'
+        },
+        {
+            title: 'Medication Identifier',
+            icon: 'fa-pills',
+            description: 'Identify medications from images',
+            link: '/ai/medication-identifier',
+            color: 'secondary'
         }
     ];
 
@@ -243,6 +257,11 @@ const Dashboard = () => {
                                         <h5 className="card-title mb-0 ms-3">{card.title}</h5>
                                     </div>
                                     <p className="card-text text-muted flex-grow-1">{card.description}</p>
+                                    {index >= 4 && (
+                                        <div className="position-absolute top-0 end-0 mt-2 me-2">
+                                            <span className="badge bg-danger">New</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Link>
