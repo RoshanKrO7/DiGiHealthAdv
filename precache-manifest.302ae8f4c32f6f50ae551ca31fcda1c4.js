@@ -1,23 +1,23 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "31ca4784cf56a1c078e60fa4708ee89b",
+    "revision": "9e07be05005adc6fc92ca474ec315de2",
     "url": "/DiGiHealthAdv/index.html"
   },
   {
-    "revision": "80174d18cc5e778c475d",
+    "revision": "1178d53d8ace07431892",
     "url": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css"
   },
   {
-    "revision": "ca4e7e6a696378dd2c4b",
-    "url": "/DiGiHealthAdv/static/css/main.e25dd692.chunk.css"
+    "revision": "469bf247f891ad648254",
+    "url": "/DiGiHealthAdv/static/css/main.84cb3f9f.chunk.css"
   },
   {
-    "revision": "80174d18cc5e778c475d",
-    "url": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js"
+    "revision": "1178d53d8ace07431892",
+    "url": "/DiGiHealthAdv/static/js/2.4ea62612.chunk.js"
   },
   {
     "revision": "2e74987d04b98d01cc53ab4ad874ed2c",
-    "url": "/DiGiHealthAdv/static/js/2.132f3cae.chunk.js.LICENSE.txt"
+    "url": "/DiGiHealthAdv/static/js/2.4ea62612.chunk.js.LICENSE.txt"
   },
   {
     "revision": "e12a948f4d6801262ea1",
@@ -28,8 +28,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/DiGiHealthAdv/static/js/4.cd86c8e5.chunk.js"
   },
   {
-    "revision": "ca4e7e6a696378dd2c4b",
-    "url": "/DiGiHealthAdv/static/js/main.8f488ee5.chunk.js"
+    "revision": "469bf247f891ad648254",
+    "url": "/DiGiHealthAdv/static/js/main.bac87628.chunk.js"
   },
   {
     "revision": "f87c5c0a1a6de5d22d32",
