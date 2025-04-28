@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "9e07be05005adc6fc92ca474ec315de2",
+    "revision": "bc945ce5f189f8cee16c4b56f1572ca2",
     "url": "/DiGiHealthAdv/index.html"
   },
   {
@@ -8,7 +8,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css"
   },
   {
-    "revision": "469bf247f891ad648254",
+    "revision": "a6fd3405e3461c7897ee",
     "url": "/DiGiHealthAdv/static/css/main.84cb3f9f.chunk.css"
   },
   {
@@ -28,8 +28,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/DiGiHealthAdv/static/js/4.cd86c8e5.chunk.js"
   },
   {
-    "revision": "469bf247f891ad648254",
-    "url": "/DiGiHealthAdv/static/js/main.bac87628.chunk.js"
+    "revision": "a6fd3405e3461c7897ee",
+    "url": "/DiGiHealthAdv/static/js/main.98834c18.chunk.js"
   },
   {
     "revision": "f87c5c0a1a6de5d22d32",
