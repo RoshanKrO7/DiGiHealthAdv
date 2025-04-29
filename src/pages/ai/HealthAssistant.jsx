@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../utils/main';
-import { openai, MODELS } from '../../utils/openai';
+import { gemini, MODELS } from '../../utils/gemini';
 import Spinner from '../../components/Spinner';
 
 const HealthAssistant = ({ mode = 'chat' }) => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([
-    { 
-      role: 'assistant', 
+    {
+      role: 'assistant',
       content: 'Hello! I\'m your AI health assistant. How can I help you today? You can ask me about general health information, symptoms, medications, or lifestyle advice.'
     }
   ]);
@@ -33,32 +33,32 @@ const HealthAssistant = ({ mode = 'chat' }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
+
       // Fetch user profile
       const { data: profileData } = await supabase
         .from('detailed_profiles')
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
       setUserProfile(profileData);
-      
+
       // Fetch user conditions/diseases
       const { data: conditions } = await supabase
         .from('user_diseases')
         .select('*')
         .eq('user_id', user.id);
-      
+
       setUserConditions(conditions || []);
-      
+
       // Fetch user medications
       const { data: medications } = await supabase
         .from('medications')
         .select('*')
         .eq('user_id', user.id);
-      
+
       setUserMedications(medications || []);
-      
+
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -67,64 +67,62 @@ const HealthAssistant = ({ mode = 'chat' }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
+
     const userMessage = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-    
+
     try {
-      // Create system message with user context
-      let systemMessage = "You are a helpful AI health assistant. Provide accurate, evidence-based information about general health topics, symptoms, medications, and lifestyle advice. Always clarify you're not a doctor and serious concerns require medical attention.";
-      
-      // Add user context if available
-      if (userProfile || userConditions.length || userMedications.length) {
-        systemMessage += "\n\nUser context (use this to personalize advice, but don't explicitly reference it unless relevant):";
-        
+      let systemMessage = "";
+
+      // Construct system message based on mode
+      if (mode === 'chat') {
+        systemMessage = "You are a helpful AI health assistant. Provide accurate, evidence-based information about general medical topics and answer medical questions. Always clarify you're not a doctor and serious concerns require medical attention.";
+      } else if (mode === 'diet') {
+        systemMessage = "You are an AI dietary assistant. Provide diet plan suggestions and nutritional information based on the user's medical conditions and medications. Consider the following user context:";
         if (userProfile) {
           systemMessage += `\nAge: ${calculateAge(userProfile.date_of_birth)}`;
           systemMessage += `\nGender: ${userProfile.gender || 'Unknown'}`;
-          systemMessage += `\nHeight: ${userProfile.height || 'Unknown'}`;
-          systemMessage += `\nWeight: ${userProfile.weight || 'Unknown'}`;
-          systemMessage += `\nBlood Type: ${userProfile.blood_group || 'Unknown'}`;
         }
-        
         if (userConditions.length) {
           systemMessage += `\nMedical Conditions: ${userConditions.map(c => c.disease_name).join(', ')}`;
         }
-        
         if (userMedications.length) {
           systemMessage += `\nMedications: ${userMedications.map(m => m.name).join(', ')}`;
         }
+        systemMessage += "\nAlways emphasize that this is for informational purposes and not a substitute for professional medical or dietary advice.";
+      } else if (mode === 'first aid') {
+        systemMessage = "You are an AI first aid assistant. Provide clear, step-by-step instructions for medical emergencies based on the user's input. Prioritize safety and advise the user to seek professional medical help immediately. Do NOT provide medical diagnoses or prescribe treatments.";
       }
-      
+
       // Get conversation history - limit to last 10 messages to save tokens
       const conversationHistory = messages.slice(-10);
-      
-      const response = await openai.chat.completions.create({
-        model: MODELS.GPT4,
-        messages: [
+
+            const response = await gemini.generateContent({
+                contents: [
           { role: 'system', content: systemMessage },
-          ...conversationHistory,
-          userMessage
+                    ...conversationHistory,
+                    userMessage
+
         ],
         temperature: 0.7,
       });
-      
-      const assistantMessage = { 
-        role: 'assistant', 
-        content: response.choices[0].message.content 
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
-      
+
       // Optionally save the conversation
       saveConversation([...conversationHistory, userMessage, assistantMessage]);
-      
+
     } catch (error) {
       console.error('Error getting response:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
+      setMessages(prev => [...prev, {
+        role: 'assistant',
         content: 'I\'m sorry, I encountered an error. Please try again later.'
       }]);
     } finally {
@@ -136,7 +134,7 @@ const HealthAssistant = ({ mode = 'chat' }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
+
       // Save conversation to database for future reference
       await supabase
         .from('health_assistant_chats')
@@ -145,7 +143,7 @@ const HealthAssistant = ({ mode = 'chat' }) => {
           conversation: conversationMessages,
           created_at: new Date().toISOString()
         });
-        
+
     } catch (error) {
       console.error('Error saving conversation:', error);
     }
@@ -153,26 +151,28 @@ const HealthAssistant = ({ mode = 'chat' }) => {
 
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return 'Unknown';
-    
+
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
-    
+
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
+
     return age;
   };
 
   return (
     <div className="container-fluid py-4">
+      {/* Assuming mode switching is handled outside this component or via other UI */}
+      {/* The current 'symptoms' mode check is kept for now, but might need adjustment */}
       {mode === 'symptoms' ? (
-        // Symptom checker UI
+        // Symptom checker UI (if any)
         <h1>Symptom Checker</h1>
       ) : (
-        // Normal health assistant UI
+        // Normal health assistant UI for chat, diet, and first aid modes
         <div className="health-assistant">
           <div className="messages">
             {messages.map((message, index) => (
@@ -183,11 +183,11 @@ const HealthAssistant = ({ mode = 'chat' }) => {
             <div ref={messagesEndRef} />
           </div>
           <form onSubmit={handleSubmit}>
-            <input 
-              type="text" 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)} 
-              placeholder="Type your message..." 
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={`Type your message for ${mode} mode...`}
             />
             <button type="submit" disabled={loading}>
               {loading ? <Spinner /> : 'Send'}
