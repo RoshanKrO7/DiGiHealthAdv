@@ -570,3 +570,114 @@ process.on('SIGTERM', () => {
   }
   process.exit(0);
 });
+
+const analyzeSymptoms = async (symptoms, userContext) => {
+  const response = await fetch('https://digihealth-backend.onrender.com/api/analyze-report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: `
+Patient Information:
+- Age: ${userContext.age}
+- Gender: ${userContext.gender}
+- Existing Conditions: ${userContext.conditions.join(', ')}
+- Current Medications: ${userContext.medications.join(', ')}
+
+Symptoms:
+- Description: ${symptoms.description}
+- Duration: ${symptoms.duration}
+- Severity: ${symptoms.severity}
+${symptoms.additionalNotes ? `- Additional Notes: ${symptoms.additionalNotes}` : ''}
+`,
+      analysisType: 'symptoms'
+    })
+  });
+  return await response.json();
+};
+
+const analyzeMetrics = async (metrics, userContext) => {
+  const response = await fetch('https://digihealth-backend.onrender.com/api/analyze-report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: `
+Patient Information:
+- Age: ${userContext.age}
+- Gender: ${userContext.gender}
+- Height: ${userContext.height} cm
+- Target Weight: ${userContext.targetWeight} kg
+- Medical History: ${userContext.medicalHistory}
+
+Metrics Data:
+${JSON.stringify(metrics, null, 2)}
+`,
+      analysisType: 'metrics'
+    })
+  });
+  return await response.json();
+};
+
+const generateRecommendations = async (focusArea, userProfile, additionalContext) => {
+  const response = await fetch('https://digihealth-backend.onrender.com/api/health-recommendations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt: `
+Patient Profile:
+- Age: ${userProfile.age}
+- Gender: ${userProfile.gender}
+- Height: ${userProfile.height} cm
+- Weight: ${userProfile.weight} kg
+- BMI: ${userProfile.bmi}
+- Medical Conditions: ${userProfile.conditions.join(', ')}
+- Medications: ${userProfile.medications.join(', ')}
+- Lifestyle: ${userProfile.lifestyle}
+- Health Goals: ${userProfile.goals}
+
+Focus Area: ${focusArea}
+${additionalContext ? `Additional Context: ${additionalContext}` : ''}
+`
+    })
+  });
+  return await response.json();
+};
+
+const healthAssistant = async (query, context, userProfile) => {
+  const response = await fetch('https://digihealth-backend.onrender.com/api/analyze-report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: `
+Patient Information:
+- Age: ${userProfile.age}
+- Gender: ${userProfile.gender}
+- Health Preferences: ${JSON.stringify(userProfile.preferences, null, 2)}
+
+Context:
+Recent Health Data:
+${JSON.stringify(context.recentHealthData, null, 2)}
+
+Upcoming Appointments:
+${JSON.stringify(context.appointments, null, 2)}
+
+Current Medications:
+${JSON.stringify(context.medications, null, 2)}
+
+Medical Conditions:
+${context.conditions.join(', ')}
+
+User Query: ${query}
+`,
+      analysisType: 'assistant'
+    })
+  });
+  return await response.json();
+};
