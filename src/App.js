@@ -32,6 +32,7 @@ import HealthMetricsAI from './pages/ai/HealthMetricsAI';
 import HealthAssistantAI from './pages/ai/HealthAssistantAI';
 import SymptomCheckerAI from './pages/ai/SymptomCheckerAI';
 import HealthRecommendations from './pages/ai/HealthRecommendations';
+import DocumentScanner from './pages/ai/DocumentScanner';
 
 function App() {
   return (
@@ -87,6 +88,7 @@ function App() {
           <Route path="/ai/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} />
           <Route path="/ai/health-recommendations" element={<DashboardLayout><HealthRecommendations /></DashboardLayout>} />
           <Route path="/ai/symptom-checker" element={<DashboardLayout><SymptomCheckerAI /></DashboardLayout>} />
+          <Route path="/ai/document-scanner" element={<DashboardLayout><DocumentScanner /></DashboardLayout>} />
         </Routes>
       </AuthProvider>
     </Router>
