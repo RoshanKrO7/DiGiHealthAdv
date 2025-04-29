@@ -85,7 +85,7 @@ const HealthAssistant = ({ mode = 'chat' }) => {
           systemMessage += `\nAge: ${calculateAge(userProfile.date_of_birth)}`;
           systemMessage += `\nGender: ${userProfile.gender || 'Unknown'}`;
         }
-        if (userConditions.length) {
+        if (userConditions && userConditions.length) {
           systemMessage += `\nMedical Conditions: ${userConditions.map(c => c.disease_name).join(', ')}`;
         }
         if (userMedications.length) {
