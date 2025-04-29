@@ -124,109 +124,61 @@ const handleMulterError = (err, req, res, next) => {
 // Create endpoint for your health report analysis
 app.post('/api/analyze-report', async (req, res) => {
   try {
-    const { text, fileName, fileType, userId, analysisType, prompt } = req.body;
+    const { text, imageUrl, analysisType, isImageAnalysis } = req.body;
     
     // Validate required fields
     if (!text) {
       return res.status(400).json({ error: "Text content is required" });
     }
-
-    // Prepare the system prompt
-    const systemPrompt = `You are a medical document analyzer specializing in extracting clinical data.
-      When analyzing documents, focus on finding:
-      - Lab values with their reference ranges
-      - Vital signs (BP, HR, temperature)
-      - Diagnoses with ICD codes if present
-      - Medication names and dosages
-      - Follow-up recommendations
-      
-      Return a JSON object with these fields:
-      - parameters: an object with key-value pairs for lab values and vital signs
-      - aiAnalysis: an object containing:
-        - conditions: an array of medical conditions mentioned
-        - medications: an array of medications mentioned
-        - recommendations: any recommendations found
-        - summary: a brief summary of the document
-      
-      Always include these fields in your response even if values are not found.
-      If a field has no values, use an empty object, array, or string as appropriate.`;
     
-    try {
+    // Handle text-based analysis (regular medical reports)
+    if (!isImageAnalysis) {
+      try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4", // Changed from "gpt-4o" to "gpt-4"
+        model: "gpt-4o",
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt || `Analyze this medical document: ${text}` }
+          { role: "system", content: "You are a medical data extraction assistant that outputs only valid JSON." },
+          { role: "user", content: text }
         ],
         response_format: { type: "json_object" },
         temperature: 0.2
       });
       
-      let result = JSON.parse(response.choices[0].message.content);
-      
-      // Ensure the response has the correct structure
-      if (!result.aiAnalysis) {
-        result.aiAnalysis = {
-          conditions: [],
-          medications: [],
-          recommendations: "No specific recommendations found.",
-          summary: "Document analyzed but no specific information could be extracted."
-        };
+      return res.json(JSON.parse(response.choices[0].message.content));
+      } catch (openaiError) {
+        console.error("OpenAI API error:", openaiError);
+        return res.status(500).json({ error: "AI processing error", details: openaiError.message });
       }
-
-      // Convert all parameter values to strings
-      if (result.parameters) {
-        Object.keys(result.parameters).forEach(key => {
-          const value = result.parameters[key];
-          if (value === null || value === undefined) {
-            result.parameters[key] = 'N/A';
-          } else if (typeof value === 'object') {
-            result.parameters[key] = JSON.stringify(value);
-          } else {
-            result.parameters[key] = String(value);
-          }
-        });
-      }
-      
-      return res.json(result);
-    } catch (openaiError) {
-      console.error("OpenAI API error:", openaiError);
-      return res.status(500).json({ 
-        error: "AI processing error", 
-        details: openaiError.message,
-        fallback: {
-          parameters: {
-            documentType: fileType || 'unknown',
-            pageCount: 'Unknown',
-            wordCount: 'Unknown'
-          },
-          aiAnalysis: {
-            conditions: [],
-            medications: [],
-            recommendations: "AI processing failed. Please try again later.",
-            summary: "Unable to process document at this time."
-          }
-        }
-      });
     }
+    
+    // Handle image-based analysis
+    if (isImageAnalysis && imageUrl) {
+      try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          { 
+            role: "user", 
+            content: [
+              { type: "text", text: text },
+              { type: "image_url", image_url: { url: imageUrl } }
+            ]
+          }
+        ],
+        max_tokens: 1000
+      });
+      
+      return res.json(JSON.parse(response.choices[0].message.content));
+      } catch (openaiError) {
+        console.error("OpenAI Vision API error:", openaiError);
+        return res.status(500).json({ error: "AI image processing error", details: openaiError.message });
+      }
+    }
+    
+    res.status(400).json({ error: "Invalid request parameters" });
   } catch (error) {
     console.error("General error in analyze-report:", error);
-    res.status(500).json({ 
-      error: error.message,
-      fallback: {
-        parameters: {
-          documentType: 'unknown',
-          pageCount: 'Unknown',
-          wordCount: 'Unknown'
-        },
-        aiAnalysis: {
-          conditions: [],
-          medications: [],
-          recommendations: "Processing failed. Please try again later.",
-          summary: "Unable to process document at this time."
-        }
-      }
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
