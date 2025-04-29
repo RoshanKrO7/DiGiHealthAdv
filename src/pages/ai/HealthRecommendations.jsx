@@ -116,46 +116,60 @@ const HealthRecommendations = () => {
 
     try {
       // Create a prompt for recommendations
-      const prompt = `
-        You are a health and wellness advisor. Based on the following user profile, provide personalized health recommendations.
-        
-        User Profile:
-        - Age: ${calculateAge(userProfile.date_of_birth)}
-        - Gender: ${userProfile.gender || 'Not specified'}
-        - Height: ${userProfile.height ? `${userProfile.height} cm` : 'Not provided'}
-        - Weight: ${userProfile.weight ? `${userProfile.weight} kg` : 'Not provided'}
-        - BMI: ${userProfile.bmi || 'Not calculated'}
-        ${userProfile.conditions.length > 0 ? `- Medical Conditions: ${userProfile.conditions.join(', ')}` : '- No medical conditions specified'}
-        ${userProfile.medications.length > 0 ? `- Medications: ${userProfile.medications.join(', ')}` : '- No medications specified'}
-        
-        Focus area: ${selectedFocus}
-        
-        ${additionalContext ? `Additional context: ${additionalContext}` : ''}
-        
-        Please provide detailed health recommendations specific to the focus area. Include:
-        1. A summary of key recommendations
-        2. Detailed explanations and guidance
-        3. Specific actionable steps
-        4. Any relevant warnings or precautions
-        
-        Format your response as a JSON object with these keys:
-        - summary: A brief summary of recommendations (1-2 sentences)
-        - recommendations: Array of specific recommendation objects, each with:
-          - title: Short title for the recommendation
-          - description: Detailed explanation
-          - action_steps: Array of specific action steps
-        - warnings: Any important precautions or warnings
-      `;
+      const promptText = `Generate health recommendations for a ${calculateAge(userProfile.date_of_birth)} year old ${userProfile.gender || 'person'} with the following profile:
+      Height: ${userProfile.height ? `${userProfile.height} cm` : 'Not provided'}
+      Weight: ${userProfile.weight ? `${userProfile.weight} kg` : 'Not provided'}
+      BMI: ${userProfile.bmi || 'Not calculated'}
+      Medical Conditions: ${userProfile.conditions.length > 0 ? userProfile.conditions.join(', ') : 'None'}
+      Medications: ${userProfile.medications.length > 0 ? userProfile.medications.join(', ') : 'None'}
+      
+      Focus Area: ${selectedFocus}
+      
+      ${additionalContext ? `Additional Context: ${additionalContext}` : ''}
+      
+      Please provide recommendations in the following categories:
+      - General health recommendations
+      - Lifestyle changes
+      - Dietary advice
+      - Exercise plan
+      - Follow-up actions
+      
+      Format the response as a JSON object with these fields:
+      - recommendations: array of specific health recommendations
+      - lifestyleChanges: array of lifestyle modifications
+      - dietaryAdvice: array of dietary recommendations
+      - exercisePlan: array of exercise recommendations
+      - followUpActions: array of follow-up actions
+      - summary: a brief summary of all recommendations`;
 
-      // Call our backend API through the utility function
-      const result = await callOpenAI(prompt);
+      // Call the backend API with simplified request
+      const response = await fetch('https://digihealth-backend.onrender.com/api/analyze-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: promptText,
+          analysisType: 'recommendations'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate recommendations');
+      }
+
+      const result = await response.json();
       
       // Store the result 
       const newRecommendations = {
         focus_area: selectedFocus,
-        summary: result.summary || '',
+        summary: result.summary || 'No specific recommendations generated.',
         recommendations: result.recommendations || [],
-        warnings: result.warnings || [],
+        lifestyleChanges: result.lifestyleChanges || [],
+        dietaryAdvice: result.dietaryAdvice || [],
+        exercisePlan: result.exercisePlan || [],
+        followUpActions: result.followUpActions || [],
         created_at: new Date().toISOString()
       };
       
@@ -169,7 +183,53 @@ const HealthRecommendations = () => {
 
     } catch (error) {
       console.error('Error generating recommendations:', error);
-      setError('Failed to generate recommendations. Please try again later.');
+      
+      // Provide fallback recommendations when the backend fails
+      const fallbackRecommendations = {
+        focus_area: selectedFocus,
+        summary: 'Based on your profile, here are some general health recommendations:',
+        recommendations: [
+          'Maintain a balanced diet with plenty of fruits and vegetables',
+          'Stay physically active with regular exercise',
+          'Get adequate sleep (7-9 hours per night)',
+          'Stay hydrated by drinking plenty of water',
+          'Schedule regular check-ups with your healthcare provider'
+        ],
+        lifestyleChanges: [
+          'Incorporate regular physical activity into your daily routine',
+          'Practice stress management techniques',
+          'Maintain a consistent sleep schedule',
+          'Limit alcohol consumption and avoid smoking'
+        ],
+        dietaryAdvice: [
+          'Eat a variety of nutrient-rich foods',
+          'Limit processed foods and added sugars',
+          'Include lean proteins in your diet',
+          'Stay hydrated throughout the day'
+        ],
+        exercisePlan: [
+          'Aim for at least 150 minutes of moderate exercise per week',
+          'Include both cardio and strength training',
+          'Start slowly and gradually increase intensity',
+          'Find activities you enjoy to stay motivated'
+        ],
+        followUpActions: [
+          'Schedule a follow-up with your healthcare provider',
+          'Track your progress and adjust as needed',
+          'Join a support group or find an accountability partner',
+          'Set specific, measurable health goals'
+        ],
+        created_at: new Date().toISOString()
+      };
+      
+      setRecommendations(fallbackRecommendations);
+      setError('Note: These are general recommendations as the AI service is currently unavailable. Please consult with your healthcare provider for personalized advice.');
+      
+      // Save fallback recommendations to database
+      await saveRecommendationsToDatabase(fallbackRecommendations);
+      
+      // Refresh history
+      fetchRecommendationHistory(userId);
     } finally {
       setLoading(false);
     }
@@ -220,247 +280,122 @@ const HealthRecommendations = () => {
   };
 
   return (
-    <div className="container py-4">
-      <h1 className="mb-4">AI Health Recommendations</h1>
+    <div className="health-recommendations">
+      <h1>Health Recommendations</h1>
       
       {error && (
-        <div className="alert alert-danger" role="alert">
+        <div className="error-message">
           {error}
         </div>
       )}
-      
-      <div className="row">
-        <div className="col-lg-4 mb-4">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h5 className="card-title">Generate Recommendations</h5>
-              
-              {!userProfile ? (
-                <div className="alert alert-warning">
-                  Please complete your health profile to receive personalized recommendations.
-                  <div className="mt-3">
-                    <button 
-                      className="btn btn-primary"
-                      onClick={() => navigate('/profile')}
-                    >
-                      Complete Profile
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <label htmlFor="focusArea" className="form-label">Focus Area</label>
-                    <select
-                      id="focusArea"
-                      className="form-select"
-                      value={selectedFocus}
-                      onChange={(e) => setSelectedFocus(e.target.value)}
-                      disabled={loading}
-                    >
-                      {focusAreas.map(area => (
-                        <option key={area.id} value={area.id}>{area.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="mb-3">
-                    <label htmlFor="additionalContext" className="form-label">Additional Context (Optional)</label>
-                    <textarea
-                      id="additionalContext"
-                      className="form-control"
-                      rows="3"
-                      placeholder="Add any specific concerns or goals..."
-                      value={additionalContext}
-                      onChange={(e) => setAdditionalContext(e.target.value)}
-                      disabled={loading}
-                    ></textarea>
-                  </div>
-                  
-                  <button
-                    className="btn btn-primary w-100"
-                    onClick={generateRecommendations}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner size="sm" /> Generating...
-                      </>
-                    ) : (
-                      'Generate Recommendations'
-                    )}
-                  </button>
-                </>
-              )}
-              
-              {history.length > 0 && (
-                <div className="mt-4">
-                  <h6>Previous Recommendations</h6>
-                  <div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                    {history.map(item => (
-                      <button
-                        key={item.id}
-                        className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                        onClick={() => viewHistoricalRecommendation(item.id)}
-                      >
-                        <div>
-                          <div>{focusAreas.find(fa => fa.id === item.focus_area)?.label || item.focus_area}</div>
-                          <small className="text-muted">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </small>
-                        </div>
-                        <span className="badge bg-primary rounded-pill">View</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+
+      <div className="recommendations-form">
+        <div className="form-group">
+          <label>Focus Area:</label>
+          <select 
+            value={selectedFocus} 
+            onChange={(e) => setSelectedFocus(e.target.value)}
+          >
+            {focusAreas.map(area => (
+              <option key={area.id} value={area.id}>
+                {area.label}
+              </option>
+            ))}
+          </select>
         </div>
-        
-        <div className="col-lg-8">
-          {loading ? (
-            <div className="card shadow-sm">
-              <div className="card-body text-center py-5">
-                <Spinner />
-                <p className="mt-3">Generating personalized health recommendations...</p>
-                <p className="text-muted small">This may take a moment as our AI analyzes your health profile</p>
-              </div>
-            </div>
-          ) : recommendations ? (
-            <div className="card shadow-sm">
-              <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">
-                  {focusAreas.find(fa => fa.id === recommendations.focus_area)?.label || recommendations.focus_area} Recommendations
-                </h5>
-              </div>
-              <div className="card-body">
-                <p className="lead">{recommendations.summary}</p>
-                
-                <div className="recommendations-list mt-4">
-                  {recommendations.recommendations.map((rec, index) => (
-                    <div key={index} className="recommendation-item mb-4">
-                      <h5>{rec.title}</h5>
-                      <p>{rec.description}</p>
-                      
-                      {rec.action_steps?.length > 0 && (
-                        <div className="action-steps">
-                          <h6>Action Steps:</h6>
-                          <ul>
-                            {rec.action_steps.map((step, idx) => (
-                              <li key={idx}>{step}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                {recommendations.warnings && (
-                  <div className="alert alert-warning mt-3">
-                    <h6>Important Notes:</h6>
-                    <p>{recommendations.warnings}</p>
-                  </div>
-                )}
-                
-                <div className="disclaimer mt-4">
-                  <small className="text-muted">
-                    <strong>Disclaimer:</strong> These recommendations are generated by AI based on your profile information. 
-                    They are not a substitute for professional medical advice. Always consult with healthcare providers before 
-                    making significant changes to your health regimen.
-                  </small>
-                </div>
-              </div>
-              <div className="card-footer text-muted">
-                <small>Generated on {new Date(recommendations.created_at).toLocaleString()}</small>
-              </div>
-            </div>
-          ) : (
-            <div className="card shadow-sm">
-              <div className="card-body p-5 text-center">
-                <div className="text-muted mb-3">
-                  <i className="fas fa-lightbulb fa-3x"></i>
-                </div>
-                <h5>Select a focus area and generate recommendations</h5>
-                <p className="text-muted">
-                  Our AI will analyze your health profile and provide personalized recommendations
-                  based on your specific needs and goals.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <div className="card shadow-sm mt-4">
-            <div className="card-body">
-              <h5>How We Create Your Recommendations</h5>
-              <p>
-                Our AI-powered recommendation system uses multiple data points from your health profile to generate personalized health guidance:
-              </p>
-              <div className="row g-4">
-                <div className="col-md-6">
-                  <div className="d-flex mb-2">
-                    <div className="me-3 text-primary">
-                      <i className="fas fa-user-circle fa-lg"></i>
-                    </div>
-                    <div>
-                      <h6>Your Profile</h6>
-                      <p className="text-muted small mb-0">
-                        Age, gender, height, weight, and BMI are used to tailor recommendations to your body type and demographics.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="d-flex mb-2">
-                    <div className="me-3 text-primary">
-                      <i className="fas fa-notes-medical fa-lg"></i>
-                    </div>
-                    <div>
-                      <h6>Medical Conditions</h6>
-                      <p className="text-muted small mb-0">
-                        Any conditions listed in your profile are considered to ensure recommendations are appropriate and safe.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="d-flex mb-2">
-                    <div className="me-3 text-primary">
-                      <i className="fas fa-chart-line fa-lg"></i>
-                    </div>
-                    <div>
-                      <h6>Health Parameters</h6>
-                      <p className="text-muted small mb-0">
-                        Your recorded health metrics like blood pressure, cholesterol, and glucose levels inform specific health guidance.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="d-flex">
-                    <div className="me-3 text-primary">
-                      <i className="fas fa-brain fa-lg"></i>
-                    </div>
-                    <div>
-                      <h6>AI Analysis</h6>
-                      <p className="text-muted small mb-0">
-                        Advanced AI models analyze your complete health profile to generate evidence-based recommendations specific to your selected focus area.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="alert alert-info mt-3 mb-0">
-                <small>
-                  <strong>Privacy Note:</strong> Your health data is processed securely. We use anonymized data when communicating with AI services to ensure your privacy is protected.
-                </small>
-              </div>
-            </div>
-          </div>
+
+        <div className="form-group">
+          <label>Additional Context (optional):</label>
+          <textarea
+            value={additionalContext}
+            onChange={(e) => setAdditionalContext(e.target.value)}
+            placeholder="Add any additional information or specific concerns..."
+          />
         </div>
+
+        <button 
+          onClick={generateRecommendations}
+          disabled={loading}
+          className="generate-button"
+        >
+          {loading ? <Spinner /> : 'Generate Recommendations'}
+        </button>
       </div>
+
+      {recommendations && (
+        <div className="recommendations-results">
+          <h2>Your Personalized Recommendations</h2>
+          
+          <div className="summary-section">
+            <h3>Summary</h3>
+            <p>{recommendations.summary}</p>
+          </div>
+
+          <div className="recommendations-grid">
+            <div className="recommendation-category">
+              <h3>General Recommendations</h3>
+              <ul>
+                {recommendations.recommendations.map((rec, index) => (
+                  <li key={index}>{rec}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="recommendation-category">
+              <h3>Lifestyle Changes</h3>
+              <ul>
+                {recommendations.lifestyleChanges.map((change, index) => (
+                  <li key={index}>{change}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="recommendation-category">
+              <h3>Dietary Advice</h3>
+              <ul>
+                {recommendations.dietaryAdvice.map((advice, index) => (
+                  <li key={index}>{advice}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="recommendation-category">
+              <h3>Exercise Plan</h3>
+              <ul>
+                {recommendations.exercisePlan.map((exercise, index) => (
+                  <li key={index}>{exercise}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="recommendation-category">
+              <h3>Follow-up Actions</h3>
+              <ul>
+                {recommendations.followUpActions.map((action, index) => (
+                  <li key={index}>{action}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="recommendation-history">
+          <h2>Previous Recommendations</h2>
+          <div className="history-list">
+            {history.map((item) => (
+              <div key={item.id} className="history-item">
+                <h3>{focusAreas.find(area => area.id === item.focus_area)?.label || item.focus_area}</h3>
+                <p>{new Date(item.created_at).toLocaleDateString()}</p>
+                <button onClick={() => viewHistoricalRecommendation(item.id)}>
+                  View Details
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
