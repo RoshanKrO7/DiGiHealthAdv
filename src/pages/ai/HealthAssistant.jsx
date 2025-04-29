@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../utils/main';
-// Assuming you have a gemini utility or integrated it into openai utility
-import { gemini, MODELS } from '../../utils/openai'; // Placeholder: Replace with your actual gemini import
+import { gemini, MODELS } from '../../utils/gemini';
 import Spinner from '../../components/Spinner';
 
 const HealthAssistant = ({ mode = 'chat' }) => {
@@ -100,13 +99,12 @@ const HealthAssistant = ({ mode = 'chat' }) => {
       // Get conversation history - limit to last 10 messages to save tokens
       const conversationHistory = messages.slice(-10);
 
-      // Call Gemini API (Placeholder - Replace with your actual implementation)
-      const response = await gemini.chat.completions.create({
-        model: MODELS.GEMINI, // Placeholder: Replace with your actual Gemini model
-        messages: [
+            const response = await gemini.generateContent({
+                contents: [
           { role: 'system', content: systemMessage },
-          ...conversationHistory,
-          userMessage
+                    ...conversationHistory,
+                    userMessage
+
         ],
         temperature: 0.7,
       });
