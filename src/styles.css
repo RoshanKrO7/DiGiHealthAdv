@@ -18,7 +18,7 @@
   
   /* Base UI Colors */
   --background: #f8fafc;
-  --card-bg: #ffffff;
+  --card-bg: #e6f1fb;
   --card-shadow: rgba(0, 0, 0, 0.1);
   
   /* Text Colors */
@@ -50,13 +50,13 @@
   :root {
     /* Base UI Colors - Dark Mode */
     --background: #0f172a;
-    --card-bg: #1e293b;
+    --card-bg: #16213a;
     --card-shadow: rgba(0, 0, 0, 0.3);
     
     /* Text Colors - Dark Mode */
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-primary: #58a6f9;
+    --text-secondary: #58a6f9;
+    --text-muted: #58a6f9;
     
     /* Border Colors - Dark Mode */
     --border-color: #334155;
@@ -166,6 +166,49 @@ body {
 @media (max-width: 768px) {
   #app {
     padding: 0.5rem;
+  }
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e6f1fb;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #58a6f9;
+  border-radius: 8px;
+  border: 2px solid #e6f1fb;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4361ee;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #58a6f9 #e6f1fb;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #16213a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #58a6f9;
+    border: 2px solid #16213a;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4361ee;
+  }
+  html {
+    scrollbar-color: #58a6f9 #16213a;
   }
 }
 

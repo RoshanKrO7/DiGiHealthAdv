@@ -8,11 +8,17 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setupMenuListeners();
     checkUserRole();
     fetchUserProfile();
+
+    // Close mobile menu on route change
+    return () => {
+      setIsMobileMenuOpen(false);
+    };
   }, []);
 
   const checkUserRole = async () => {
@@ -48,6 +54,9 @@ const Navbar = () => {
   const handleMenuClick = (e) => {
     e.preventDefault();
     const targetId = e.currentTarget.id;
+    setIsMobileMenuOpen(false);
+    document.body.classList.remove('mobile-menu-open');
+    
     switch (targetId) {
       case 'health-overview':
         navigate('/health-overview');
@@ -116,6 +125,20 @@ const Navbar = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    // Toggle body class for scroll locking
+    document.body.classList.toggle('mobile-menu-open');
+  };
+
+  // Clean up body class when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('mobile-menu-open');
+      setIsMobileMenuOpen(false);
+    };
+  }, []);
+
   return (
     <header className="modern-navbar">
       <div className="navbar-container">
@@ -128,6 +151,16 @@ const Navbar = () => {
             />
           </Link>
         </div>
+        
+        <button 
+          className={`hamburger-menu ${isMobileMenuOpen ? 'active' : ''}`}
+          onClick={toggleMobileMenu}
+          aria-label="Toggle menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         
         <nav id="menu" className="navbar-menu">
           <div className="menu-item">
@@ -295,6 +328,135 @@ const Navbar = () => {
             </div>
           </div>
         </nav>
+        
+        <div className={`mobile-drawer ${isMobileMenuOpen ? 'active' : ''}`}>
+          <div className="menu-item">
+            <div className="menu-text">
+              <a href="#" data-link>Your Journey</a>
+            </div>
+            <div className="sub-menu double">
+              <div className="icon-box" id="health-overview" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-hospital-user"></i></div>
+                <div className="text">
+                  <div className="title">Health Overview</div>
+                  <div className="sub-text">See, add and update your Journey</div>
+                </div>
+              </div>
+              <div className="icon-box" id="vaccination-history" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-syringe"></i></div>
+                <div className="text">
+                  <div className="title">Vaccination History</div>
+                  <div className="sub-text">View and manage vaccinations</div>
+                </div>
+              </div>
+              <div className="icon-box" id="medication-tracker" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-pills"></i></div>
+                <div className="text">
+                  <div className="title">Medication Tracker</div>
+                  <div className="sub-text">Track prescribed medications</div>
+                </div>
+              </div>
+              <div className="icon-box" id="health-analytics" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-chart-line"></i></div>
+                <div className="text">
+                  <div className="title">Health Analytics</div>
+                  <div className="sub-text">View your health trends</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="menu-item">
+            <div className="menu-text">
+              <a href="#" data-link>Appointments</a>
+            </div>
+            <div className="sub-menu double">
+              <div className="icon-box" id="upcoming-appointments" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-calendar-check"></i></div>
+                <div className="text">
+                  <div className="title">Upcoming Appointments</div>
+                  <div className="sub-text">View and manage appointments</div>
+                </div>
+              </div>
+              <div className="icon-box" id="appointment-history" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-history"></i></div>
+                <div className="text">
+                  <div className="title">Appointment History</div>
+                  <div className="sub-text">Check past appointments</div>
+                </div>
+              </div>
+              <div className="icon-box" id="telehealth-consultations" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-phone-alt"></i></div>
+                <div className="text">
+                  <div className="title">Telehealth Consultations</div>
+                  <div className="sub-text">Book virtual appointments</div>
+                </div>
+              </div>
+              <div className="icon-box" id="appointment-reminders" onClick={handleMenuClick}>
+                <div className="icon"><i className="fa fa-clock"></i></div>
+                <div className="text">
+                  <div className="title">Appointment Reminders</div>
+                  <div className="sub-text">Set and manage reminders</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="menu-item">
+            <div className="menu-text">
+              <a href="#" data-link>AI Tools</a>
+            </div>
+            <div className="sub-menu double">
+              <div className="icon-box" id="ai-health-metrics" onClick={(e) => { e.preventDefault(); navigate('/ai/health-metrics'); }}>
+                <div className="icon"><i className="fa fa-chart-bar"></i></div>
+                <div className="text">
+                  <div className="title">Health Metrics AI</div>
+                  <div className="sub-text">Smart analysis of your health data</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-symptom-checker" onClick={(e) => { e.preventDefault(); navigate('/ai/symptom-checker'); }}>
+                <div className="icon"><i className="fa fa-stethoscope"></i></div>
+                <div className="text">
+                  <div className="title">Symptom Checker</div>
+                  <div className="sub-text">AI-powered symptom analysis</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-document-scanner" onClick={(e) => { e.preventDefault(); navigate('/ai/document-scanner'); }}>
+                <div className="icon"><i className="fa fa-file-medical-alt"></i></div>
+                <div className="text">
+                  <div className="title">Document Scanner</div>
+                  <div className="sub-text">Extract text from medical documents</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-medication-identifier" onClick={(e) => { e.preventDefault(); navigate('/ai/medication-identifier'); }}>
+                <div className="icon"><i className="fa fa-pills"></i></div>
+                <div className="text">
+                  <div className="title">Medication Identifier</div>
+                  <div className="sub-text">Identify pills from images</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-image-analysis" onClick={(e) => { e.preventDefault(); navigate('/ai/image-analysis'); }}>
+                <div className="icon"><i className="fa fa-microscope"></i></div>
+                <div className="text">
+                  <div className="title">Medical Image Analysis</div>
+                  <div className="sub-text">AI analysis of medical images</div>
+                </div>
+              </div>
+              <div className="icon-box" id="ai-health-assistant" onClick={(e) => { e.preventDefault(); navigate('/ai/health-assistant'); }}>
+                <div className="icon"><i className="fa fa-robot"></i></div>
+                <div className="text">
+                  <div className="title">Health Assistant</div>
+                  <div className="sub-text">AI health chat assistant</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div 
+          className={`mobile-overlay ${isMobileMenuOpen ? 'active' : ''}`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
         
         <div className="navbar-profile">
           <div className="profile-menu menu-item">

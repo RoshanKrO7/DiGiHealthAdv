@@ -1,200 +1,128 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../utils/main';
-import { gemini, MODELS } from '../../utils/gemini';
-import Spinner from '../../components/Spinner';
+import React from 'react';
+import {
+  Webchat,
+  WebchatProvider,
+  getClient,
+} from '@botpress/webchat';
 
-const HealthAssistant = ({ mode = 'chat' }) => {
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hello! I\'m your AI health assistant. How can I help you today? You can ask me about general health information, symptoms, medications, or lifestyle advice.'
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [userProfile, setUserProfile] = useState(null);
-  const [userConditions, setUserConditions] = useState([]);
-  const [userMedications, setUserMedications] = useState([]);
-  const messagesEndRef = useRef(null);
+const HealthAssistant = () => {
+  const client = getClient({
+    clientId: "db5d7072-0246-43bb-b509-14e1d2d15530",
+    hostUrl: "https://cdn.botpress.cloud/webchat/v2.4",
+    messagingUrl: "https://messaging.botpress.cloud"
+  });
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const fetchUserData = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Fetch user profile
-      const { data: profileData } = await supabase
-        .from('detailed_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      setUserProfile(profileData);
-
-      // Fetch user conditions/diseases
-      const { data: conditions } = await supabase
-        .from('user_diseases')
-        .select('*')
-        .eq('user_id', user.id);
-
-      setUserConditions(conditions || []);
-
-      // Fetch user medications
-      const { data: medications } = await supabase
-        .from('medications')
-        .select('*')
-        .eq('user_id', user.id);
-
-      setUserMedications(medications || []);
-
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    const userMessage = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      let systemMessage = "";
-
-      // Construct system message based on mode
-      if (mode === 'chat') {
-        systemMessage = "You are a helpful AI health assistant. Provide accurate, evidence-based information about general medical topics and answer medical questions. Always clarify you're not a doctor and serious concerns require medical attention.";
-      } else if (mode === 'diet') {
-        systemMessage = "You are an AI dietary assistant. Provide diet plan suggestions and nutritional information based on the user's medical conditions and medications. Consider the following user context:";
-        if (userProfile) {
-          systemMessage += `\nAge: ${calculateAge(userProfile.date_of_birth)}`;
-          systemMessage += `\nGender: ${userProfile.gender || 'Unknown'}`;
-        }
-        if (userConditions && userConditions.length) {
-          systemMessage += `\nMedical Conditions: ${userConditions.map(c => c.disease_name).join(', ')}`;
-        }
-        if (userMedications.length) {
-          systemMessage += `\nMedications: ${userMedications.map(m => m.name).join(', ')}`;
-        }
-        systemMessage += "\nAlways emphasize that this is for informational purposes and not a substitute for professional medical or dietary advice.";
-      } else if (mode === 'first aid') {
-        systemMessage = "You are an AI first aid assistant. Provide clear, step-by-step instructions for medical emergencies based on the user's input. Prioritize safety and advise the user to seek professional medical help immediately. Do NOT provide medical diagnoses or prescribe treatments.";
+  const configuration = {
+    showPoweredBy: false,
+    showConversationButton: false,
+    enableReset: true,
+    composerPlaceholder: "Start asking for help related to Diet, First Aid and Emergency...",
+    botName: "DiGiHealth Assistant",
+    botConversationDescription: "I am here to assist you with medical related queries",
+    backgroundColor: "#ffffff",
+    textColor: "#000000",
+    foregroundColor: "#000000",
+    useSessionStorage: true,
+    showCloseButton: false,
+    hideWidget: true,
+    disableAnimations: true,
+    className: "health-assistant-chat",
+    containerWidth: "100%",
+    layoutWidth: "100%",
+    layoutHeight: "100%",
+    theme: {
+      style: {
+        background: "#ffffff",
+        fontFamily: "ibm",
+        headerBackground: "#0091ff",
+        headerText: "#ffffff",
+        botMessageBackground: "#f5f8ff",
+        botMessageText: "#000000",
+        userMessageBackground: "#0091ff",
+        userMessageText: "#ffffff",
+        borderRadius: "10px",
       }
-
-      // Get conversation history - limit to last 10 messages to save tokens
-      const conversationHistory = messages.slice(-10);
-
-            const response = await gemini.generateContent({
-                contents: [
-          { role: 'system', content: systemMessage },
-                    ...conversationHistory,
-                    userMessage
-
-        ],
-        temperature: 0.7,
-      });
-
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Optionally save the conversation
-      saveConversation([...conversationHistory, userMessage, assistantMessage]);
-
-    } catch (error) {
-      console.error('Error getting response:', error);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'I\'m sorry, I encountered an error. Please try again later.'
-      }]);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const saveConversation = async (conversationMessages) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Save conversation to database for future reference
-      await supabase
-        .from('health_assistant_chats')
-        .insert({
-          user_id: user.id,
-          conversation: conversationMessages,
-          created_at: new Date().toISOString()
-        });
-
-    } catch (error) {
-      console.error('Error saving conversation:', error);
-    }
-  };
-
-  const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) return 'Unknown';
-
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-
-    return age;
   };
 
   return (
-    <div className="container-fluid py-4">
-      {/* Assuming mode switching is handled outside this component or via other UI */}
-      {/* The current 'symptoms' mode check is kept for now, but might need adjustment */}
-      {mode === 'symptoms' ? (
-        // Symptom checker UI (if any)
-        <h1>Symptom Checker</h1>
-      ) : (
-        // Normal health assistant UI for chat, diet, and first aid modes
-        <div className="health-assistant">
-          <div className="messages">
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.role}`}>
-                {message.content}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={`Type your message for ${mode} mode...`}
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? <Spinner /> : 'Send'}
-            </button>
-          </form>
+    <div style={{
+      width: '100%',
+      maxWidth: '1000px',
+      margin: '20px auto',
+      height: 'calc(100vh - 140px)',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: '#fff',
+      borderRadius: '10px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      overflow: 'hidden'
+    }}>
+      <WebchatProvider client={client} configuration={configuration}>
+        <div style={{
+          flex: 1,
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          border: '1px solid #e2e8f0',
+          borderRadius: '10px',
+          overflow: 'hidden'
+        }}>
+          <Webchat />
         </div>
-      )}
+      </WebchatProvider>
+      <style>
+        {`
+          .health-assistant-chat {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            border-radius: 10px !important;
+            border: none !important;
+            background: #ffffff !important;
+          }
+          .health-assistant-chat > div {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            border-radius: 10px !important;
+          }
+          .bpw-widget-btn,
+          .bpw-floating-button,
+          .bpw-widget-button,
+          .bpw-float-bubble,
+          button[type="button"].bpw-widget-btn {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+          }
+          .bpw-layout {
+            border: none !important;
+            border-radius: 10px !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
+          .bpw-header {
+            border-top-left-radius: 10px !important;
+            border-top-right-radius: 10px !important;
+          }
+          .bpw-chat-container {
+            height: calc(100% - 52px) !important;
+          }
+          .bpw-composer {
+            border-bottom-left-radius: 10px !important;
+            border-bottom-right-radius: 10px !important;
+          }
+        `}
+      </style>
     </div>
   );
 };

@@ -168,62 +168,59 @@ const DocumentScanner = () => {
     setError(null);
 
     try {
-      // First, check if backend is available
-      const debugResponse = await fetch('https://digihealth-backend.onrender.com/api/check-env', {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Send to backend for processing
+      const response = await fetch('https://digihealth-backend.onrender.com/api/process-file', {
+        method: 'POST',
+        body: formData,
       });
 
-      if (!debugResponse.ok) {
-        throw new Error('Backend service is currently unavailable');
-      }
-
-      // Extract text content from the file
-      const fileContent = await extractTextFromFile(file);
-
-      // Try the primary endpoint first
-      try {
-        const response = await fetch('https://digihealth-backend.onrender.com/api/analyze-report', {
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            text: fileContent,
-            fileName: file.name,
-            fileType: file.type,
-            userId: user.id,
-            analysisType: 'document',
-            prompt: 'Please analyze this medical document and extract key information including conditions, medications, and recommendations.'
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          await saveDocumentToDatabase(file, data);
-          setResult(data);
-          return;
+      if (!response.ok) {
+        let errorMessage = 'Error processing file';
+        let errorData;
+        
+        try {
+          errorData = await response.json();
+          console.error('Backend error response:', errorData);
+          errorMessage = errorData.error || errorMessage;
+          
+          // Special handling for API key issues
+          if (errorData.details && (
+              errorData.details.includes('API key') || 
+              errorData.details.includes('authentication') ||
+              errorData.details.includes('401'))
+          ) {
+            setError('The AI service is temporarily unavailable. Your file will be uploaded but not analyzed.');
+            
+            // Set default empty analysis structure
+            const defaultResult = {
+              parameters: {},
+              aiAnalysis: {
+                conditions: [],
+                medications: [],
+                recommendations: "AI analysis unavailable. Please review the document manually.",
+                summary: "This document was uploaded but could not be analyzed by AI due to service unavailability."
+              }
+            };
+            
+            await saveDocumentToDatabase(file, defaultResult);
+            setResult(defaultResult);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to parse error response', e);
         }
-      } catch (primaryError) {
-        console.warn('Primary endpoint failed, using local processing:', primaryError);
+        
+        throw new Error(errorMessage);
       }
 
-      // If primary endpoint fails, use local processing
-      const localResult = processDocumentLocally(fileContent, file.type);
-      const saved = await saveDocumentToDatabase(file, localResult);
-      setResult(localResult);
-
-      if (!saved) {
-        setError('Document analysis complete, but failed to save to storage. Results are still available.');
-      }
+      const result = await response.json();
+      await saveDocumentToDatabase(file, result);
+      setResult(result);
 
     } catch (err) {
       console.error('Error processing document:', err);

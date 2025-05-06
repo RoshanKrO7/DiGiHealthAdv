@@ -6,7 +6,7 @@
   --warning-color: #f59e0b;  /* Amber 500 */
   --danger-color: #ef4444;   /* Red 500 */
   --background-color: #ffffff; /* White background */
-  --card-bg: #ffffff;
+  --card-bg: #e6f1fb;
   --card-shadow: rgba(0, 0, 0, 0.1);
   --text-primary: #1e293b;   /* Slate 800 */
   --text-secondary: #64748b; /* Slate 500 */
@@ -19,11 +19,19 @@
     --primary-color: #3b82f6;    /* Blue 500 */
     --secondary-color: #60a5fa;  /* Blue 400 */
     --background-color: #f8fafc; /* Very light gray instead of black */
-    --card-bg: #ffffff68;
+    --card-bg: #16213a;
     --card-shadow: rgba(0, 0, 0, 0.15);
-    --text-primary: #0c1017;    /* Slate 800 */
-    --text-secondary: #000000;  /* Slate 500 */
+    --text-primary: #58a6f9;
+    --text-secondary: #58a6f9;
     --border-color : #e2e8f0;    /* Slate 200 */
+  }
+  .medication-card,
+  .medication-calendar,
+  .medication-form,
+  .medication-form-card,
+  .empty-state,
+  .tab-content {
+    background-color: #16213a;
   }
 }
 
@@ -381,7 +389,7 @@
   .medication-calendar,
   .medication-form,
   .medication-card,.medication-form-card,.empty-state {
-    background-color: #ffffff00;
+    background-color: #16213a;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0);
   }
 

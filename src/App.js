@@ -26,7 +26,7 @@ import SecuritySettings from './pages/SecuritySettings';
 import DataBackup from './pages/DataBackup';
 import DatabaseSetup from './pages/DatabaseSetup';
 import HealthMetricsVisualizer from './components/HealthMetricsVisualizer';
-import HealthAssistant from './components/HealthAssistant';
+import HealthAssistant from './pages/ai/HealthAssistant';
 import AIInsightsDashboard from './components/AIInsightsDashboard';
 import HealthMetricsAI from './pages/ai/HealthMetricsAI';
 import HealthAssistantAI from './pages/ai/HealthAssistantAI';
@@ -80,7 +80,7 @@ function App() {
           <Route path="/settings/backup" element={<DashboardLayout><DataBackup /></DashboardLayout>} />
           <Route path="/admin/database-setup" element={<DashboardLayout><DatabaseSetup /></DashboardLayout>} />
           <Route path="/health-metrics" element={<DashboardLayout><HealthMetricsVisualizer /></DashboardLayout>} />
-          <Route path="/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} />
+          {/* <Route path="/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} /> */}
           <Route path="/ai-insights" element={<DashboardLayout><AIInsightsDashboard /></DashboardLayout>} />
           <Route path="/health-metrics/upload" element={<DashboardLayout><HealthMetricsVisualizer mode="upload" /></DashboardLayout>} />
           <Route path="/health-assistant/recommendations" element={<DashboardLayout><HealthAssistant mode="recommendations" /></DashboardLayout>} />

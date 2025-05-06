@@ -12,7 +12,7 @@
   }
   
   .hover-card, .card {
-    background: var(--card-bg); /* Using theme variable */
+    background: var(--card-bg) !important;
   }
    
   .hover-card .card-title {
@@ -21,6 +21,10 @@
 
   .hover-card .card-text {
     color: var(--text-secondary);
+  }
+
+  .hover-card:hover, .card:hover {
+    background: var(--card-bg) !important;
   }
 }
 
@@ -49,35 +53,40 @@
   min-height: 100vh;
     width: 100%;
   background: transparent; /* Use the global background */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 .dashboard-main {
-  padding-top: 1.5rem;
+  padding: 1.5rem 1rem; /* Adjust padding for mobile */
     flex: 1;
   margin-top: 0; /* Ensures no gap between navbar and content */
     position: relative;
   z-index: 1; /* Lower than navbar's z-index to ensure proper stacking */
-  width: 100%; /* Ensure full width */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 /* Content wrapper to prevent overlap */
 .content-wrapper {
   width: 100%;
-  max-width: 100%; /* Full width */
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 1rem; /* Just horizontal padding */
+  padding: 0;
   position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Adjust dashboard container for fixed navbar and footer */
 .dashboard.container-fluid {
   min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
-  padding: 2rem;
-  background: transparent; /* Use the global background */
+  padding: 1rem;
+  background: transparent;
   position: relative;
   overflow: hidden;
   margin-top: 0;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* Glass morphism effect for the container */
@@ -109,6 +118,7 @@
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2) !important;
   display: flex;
   flex-direction: column;
+  width: 100%; /* Ensure cards take full width on mobile */
 }
 
 .hover-card::before {
@@ -136,7 +146,7 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  padding: 1rem !important; /* Ensure padding override */
+  padding: 1rem !important;
 }
 
 .hover-card .card-title {
@@ -337,10 +347,37 @@ h4.mb-3::before {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .dashboard.container-fluid {
-    padding: 1rem;
+  .dashboard-main {
+    padding: 1rem 0.5rem;
   }
-  
+
+  .content-wrapper {
+    padding: 0 0.5rem;
+  }
+
+  .dashboard.container-fluid {
+    padding: 0.5rem;
+  }
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .col-lg-3, .col-md-6, .col-12 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .hover-card {
+    margin-bottom: 1rem;
+  }
+
+  .row.g-4 {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+
   .row.mb-4 .col h1.h3 {
     font-size: 1.5rem;
 }
@@ -358,6 +395,32 @@ h4.mb-3::before {
   .hover-card .card-text {
     font-size: 0.9rem;
   }
+}
+
+/* Ensure proper spacing in grid system */
+.row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  width: auto;
+}
+
+.col-lg-3, .col-md-6, .col-12 {
+  padding: 0.5rem;
+}
+
+/* Card title and content adjustments */
+.hover-card .card-body {
+  padding: 1rem !important;
+}
+
+.hover-card .card-title {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.hover-card .card-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Welcome message styling */
