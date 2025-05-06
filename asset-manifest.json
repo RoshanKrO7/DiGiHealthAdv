@@ -1,30 +1,25 @@
 {
   "files": {
-    "main.css": "/DiGiHealthAdv/static/css/main.6cee5885.chunk.css",
-    "main.js": "/DiGiHealthAdv/static/js/main.1728b3a6.chunk.js",
-    "main.js.map": "/DiGiHealthAdv/static/js/main.1728b3a6.chunk.js.map",
-    "runtime-main.js": "/DiGiHealthAdv/static/js/runtime-main.10cd9856.js",
-    "runtime-main.js.map": "/DiGiHealthAdv/static/js/runtime-main.10cd9856.js.map",
-    "static/css/2.6c4dce77.chunk.css": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css",
-    "static/js/2.13ca029d.chunk.js": "/DiGiHealthAdv/static/js/2.13ca029d.chunk.js",
-    "static/js/2.13ca029d.chunk.js.map": "/DiGiHealthAdv/static/js/2.13ca029d.chunk.js.map",
-    "static/js/3.aa367d27.chunk.js": "/DiGiHealthAdv/static/js/3.aa367d27.chunk.js",
-    "static/js/3.aa367d27.chunk.js.map": "/DiGiHealthAdv/static/js/3.aa367d27.chunk.js.map",
-    "static/js/4.c8cdc822.chunk.js": "/DiGiHealthAdv/static/js/4.c8cdc822.chunk.js",
-    "static/js/4.c8cdc822.chunk.js.map": "/DiGiHealthAdv/static/js/4.c8cdc822.chunk.js.map",
+    "main.css": "/DiGiHealthAdv/static/css/main.2ee7a1d3.css",
+    "main.js": "/DiGiHealthAdv/static/js/main.45487077.js",
+    "static/js/198.6056d451.chunk.js": "/DiGiHealthAdv/static/js/198.6056d451.chunk.js",
+    "static/js/453.a0b1a081.chunk.js": "/DiGiHealthAdv/static/js/453.a0b1a081.chunk.js",
+    "static/media/fa-solid-900.ttf": "/DiGiHealthAdv/static/media/fa-solid-900.2582b0e4bcf85eceead0.ttf",
+    "static/media/fa-brands-400.ttf": "/DiGiHealthAdv/static/media/fa-brands-400.1815e00441357e01619e.ttf",
+    "static/media/fa-solid-900.woff2": "/DiGiHealthAdv/static/media/fa-solid-900.2463b90d9a316e4e5294.woff2",
+    "static/media/fa-brands-400.woff2": "/DiGiHealthAdv/static/media/fa-brands-400.c210719e60948b211a12.woff2",
+    "static/media/fa-regular-400.ttf": "/DiGiHealthAdv/static/media/fa-regular-400.914997e1bdfc990d0897.ttf",
+    "static/media/fa-regular-400.woff2": "/DiGiHealthAdv/static/media/fa-regular-400.89999bdf5d835c012025.woff2",
+    "static/media/fa-v4compatibility.ttf": "/DiGiHealthAdv/static/media/fa-v4compatibility.da94ef451f4969af06e6.ttf",
+    "static/media/fa-v4compatibility.woff2": "/DiGiHealthAdv/static/media/fa-v4compatibility.ea8f94e1d22e0d35ccd4.woff2",
     "index.html": "/DiGiHealthAdv/index.html",
-    "precache-manifest.e542f85d7f2ae1ff79578e0c83122b53.js": "/DiGiHealthAdv/precache-manifest.e542f85d7f2ae1ff79578e0c83122b53.js",
-    "service-worker.js": "/DiGiHealthAdv/service-worker.js",
-    "static/css/2.6c4dce77.chunk.css.map": "/DiGiHealthAdv/static/css/2.6c4dce77.chunk.css.map",
-    "static/css/main.6cee5885.chunk.css.map": "/DiGiHealthAdv/static/css/main.6cee5885.chunk.css.map",
-    "static/js/2.13ca029d.chunk.js.LICENSE.txt": "/DiGiHealthAdv/static/js/2.13ca029d.chunk.js.LICENSE.txt",
-    "static/media/all.min.css": "/DiGiHealthAdv/static/media/fa-v4compatibility.a772da7b.woff2"
+    "main.2ee7a1d3.css.map": "/DiGiHealthAdv/static/css/main.2ee7a1d3.css.map",
+    "main.45487077.js.map": "/DiGiHealthAdv/static/js/main.45487077.js.map",
+    "198.6056d451.chunk.js.map": "/DiGiHealthAdv/static/js/198.6056d451.chunk.js.map",
+    "453.a0b1a081.chunk.js.map": "/DiGiHealthAdv/static/js/453.a0b1a081.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.10cd9856.js",
-    "static/css/2.6c4dce77.chunk.css",
-    "static/js/2.13ca029d.chunk.js",
-    "static/css/main.6cee5885.chunk.css",
-    "static/js/main.1728b3a6.chunk.js"
+    "static/css/main.2ee7a1d3.css",
+    "static/js/main.45487077.js"
   ]
 }
