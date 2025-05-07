@@ -245,35 +245,28 @@ const Dashboard = () => {
             {/* AI Features Section */}
             <h4 className="mb-3">AI-Powered Features</h4>
             <div className="row g-4 mb-5">
-                <div className="col-12 col-md-6 col-lg-3">
-                    <Link to="/ai/chat" className="dashboard-card">
-                        <div className="card-icon">
-                            <i className="fas fa-comments"></i>
-                        </div>
-                        <h3>AI Health Assistant</h3>
-                        <p>Chat with our AI assistant for health advice</p>
-                    </Link>
-                </div>
-
-                <div className="col-12 col-md-6 col-lg-3">
-                    <Link to="/ai/vision" className="dashboard-card">
-                        <div className="card-icon">
-                            <i className="fas fa-eye"></i>
-                        </div>
-                        <h3>AI Vision Analysis</h3>
-                        <p>Analyze medical images with AI</p>
-                    </Link>
-                </div>
-
-                <div className="col-12 col-md-6 col-lg-3">
-                    <Link to="/ai/medication" className="dashboard-card">
-                        <div className="card-icon">
-                            <i className="fas fa-pills"></i>
-                        </div>
-                        <h3>AI Medication Assistant</h3>
-                        <p>Get AI-powered medication guidance</p>
-                    </Link>
-                </div>
+                {aiFeatureCards.map((card, index) => (
+                    <div key={index} className="col-12 col-md-6 col-lg-3">
+                        <Link to={card.link} className="text-decoration-none h-100">
+                            <div className={`card hover-card border-${card.color} h-100`}>
+                                <div className="card-body d-flex flex-column">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className={`icon-circle bg-${card.color} text-white`}>
+                                            <i className={`fas ${card.icon}`}></i>
+                                        </div>
+                                        <h5 className="card-title mb-0 ms-3">{card.title}</h5>
+                                    </div>
+                                    <p className="card-text text-muted flex-grow-1">{card.description}</p>
+                                    {index >= 4 && (
+                                        <div className="position-absolute top-0 end-0 mt-2 me-2">
+                                            <span className="badge bg-danger">New</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                ))}
             </div>
         </div>
     );

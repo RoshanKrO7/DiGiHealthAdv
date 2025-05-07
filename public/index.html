@@ -3,9 +3,6 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, shrink-to-fit=no" />
   <meta name="theme-color" content="#000000" />
@@ -23,40 +20,11 @@
   <meta name="apple-mobile-web-app-title" content="DigiHealth" />
   <script src="https://kit.fontawesome.com/8805295f1b.js" crossorigin="anonymous"></script>
   <title>DigiHealth</title>
-  <script>
-    window.onerror = function(msg, url, lineNo, columnNo, error) {
-      console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
-      return false;
-    };
-  </script>
 </head>
 
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root">
-    <div style="text-align: center; padding: 20px;">
-      Loading DigiHealth...
-    </div>
-  </div>
-  <script>
-    // Add a fallback in case the app fails to load
-    setTimeout(function() {
-      if (document.getElementById('root').children.length === 1) {
-        document.getElementById('root').innerHTML = `
-          <div style="text-align: center; padding: 20px;">
-            <h2>Loading Error</h2>
-            <p>If you're seeing this message, there might be an issue loading the application.</p>
-            <p>Please try:</p>
-            <ul style="list-style: none; padding: 0;">
-              <li>Refreshing the page</li>
-              <li>Clearing your browser cache</li>
-              <li>Using a different browser</li>
-            </ul>
-          </div>
-        `;
-      }
-    }, 5000);
-  </script>
+  <div id="root"></div>
 </body>
 
 </html>
