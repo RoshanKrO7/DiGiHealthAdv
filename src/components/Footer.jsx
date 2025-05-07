@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 const Footer = () => {
@@ -9,9 +10,9 @@ const Footer = () => {
                     <p>&copy; {new Date().getFullYear()} DiGiHealth. All rights reserved.</p>
                 </div>
                 <div className="footer-links">
-                    <a href="/terms">Terms</a>
-                    <a href="/privacy">Privacy</a>
-                    <a href="/support">Support</a>
+                    <Link to="/terms">Terms</Link>
+                    <Link to="/privacy">Privacy</Link>
+                    <Link to="/support/contact">Support</Link>
                 </div>
             </div>
         </footer>

@@ -33,6 +33,20 @@ import HealthAssistantAI from './pages/ai/HealthAssistantAI';
 import SymptomCheckerAI from './pages/ai/SymptomCheckerAI';
 import HealthRecommendations from './pages/ai/HealthRecommendations';
 import DocumentScanner from './pages/ai/DocumentScanner';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import SupportPage from './pages/SupportPage';
+import SettingsPage from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
+import AIPage from './pages/AIPage';
+import AppointmentsPage from './pages/AppointmentsPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import SupportPage from './pages/SupportPage';
+import SettingsPage from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
+import AIPage from './pages/AIPage';
+import AppointmentsPage from './pages/AppointmentsPage';
 
 function App() {
   return (
@@ -62,27 +76,16 @@ function App() {
           <Route path="/vaccination-history" element={<DashboardLayout><VaccinationHistoryPage /></DashboardLayout>} />
           <Route path="/medication-tracker" element={<DashboardLayout><MedicationTracker /></DashboardLayout>} />
           <Route path="/health-analytics" element={<DashboardLayout><HealthAnalyticsPage /></DashboardLayout>} />
-          <Route path="/appointments/upcoming" element={<DashboardLayout><UpcomingAppointmentsPage /></DashboardLayout>} />
-          <Route path="/appointments/history" element={<DashboardLayout><AppointmentHistoryPage /></DashboardLayout>} />
-          <Route path="/appointments/telehealth" element={<DashboardLayout><TelehealthConsultationsPage /></DashboardLayout>} />
-          <Route path="/appointments/reminders" element={<DashboardLayout><AppointmentRemindersPage /></DashboardLayout>} />
+          <Route path="/appointments/*" element={<AppointmentsPage />} />
           <Route path="/help-center" element={<DashboardLayout><HelpCenterPage /></DashboardLayout>} />
-          <Route path="/support/contact" element={<DashboardLayout><ContactSupportPage /></DashboardLayout>} />
-          <Route path="/support/chat" element={<DashboardLayout><LiveChat /></DashboardLayout>} />
+          <Route path="/support/*" element={<SupportPage />} />
           <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
-          <Route path="/settings/security" element={<DashboardLayout><SecuritySettings /></DashboardLayout>} />
-          <Route path="/settings/backup" element={<DashboardLayout><DataBackup /></DashboardLayout>} />
-          <Route path="/admin/database-setup" element={<DashboardLayout><DatabaseSetup /></DashboardLayout>} />
-          <Route path="/health-metrics" element={<DashboardLayout><HealthMetricsVisualizer /></DashboardLayout>} />
-          {/* <Route path="/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} /> */}
-          <Route path="/ai-insights" element={<DashboardLayout><AIInsightsDashboard /></DashboardLayout>} />
-          <Route path="/health-metrics/upload" element={<DashboardLayout><HealthMetricsVisualizer mode="upload" /></DashboardLayout>} />
-          <Route path="/health-assistant/recommendations" element={<DashboardLayout><HealthAssistant mode="recommendations" /></DashboardLayout>} />
-          <Route path="/ai/health-metrics" element={<DashboardLayout><HealthMetricsAI /></DashboardLayout>} />
-          <Route path="/ai/health-assistant" element={<DashboardLayout><HealthAssistant /></DashboardLayout>} />
-          <Route path="/ai/health-recommendations" element={<DashboardLayout><HealthRecommendations /></DashboardLayout>} />
-          <Route path="/ai/symptom-checker" element={<DashboardLayout><SymptomCheckerAI /></DashboardLayout>} />
-          <Route path="/ai/document-scanner" element={<DashboardLayout><DocumentScanner /></DashboardLayout>} />
+          <Route path="/settings/*" element={<SettingsPage />} />
+          <Route path="/admin/*" element={<AdminPage />} />
+          <Route path="/ai/*" element={<AIPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </Router>
