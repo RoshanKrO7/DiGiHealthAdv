@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -36,13 +36,7 @@ import DocumentScanner from './pages/ai/DocumentScanner';
 
 function App() {
   return (
-    <Router 
-      basename="/DiGiHealthAdv"
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
+    <Router>
       <AuthProvider>
         <ToastContainer
           position="top-right"

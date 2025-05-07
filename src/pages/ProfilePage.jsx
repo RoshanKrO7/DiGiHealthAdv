@@ -456,7 +456,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="profile-page">
+    <div className="profile-page container-fluid">
       {notification && (
         <div className="alert alert-info alert-dismissible fade show" role="alert">
           {notification}
@@ -464,404 +464,434 @@ const ProfilePage = () => {
         </div>
       )}
       
-      {/* Left Sidebar */}
-      <div className="profile-sidebar">
-        <div className="profile-picture-container">
-          <img
-            src={profile.profile_picture || '/default-profile.png'}
-            alt="Profile"
-            className="profile-picture"
-          />
-          {editing && (
-            <div className="mt-2">
-              <input type="file" onChange={handleImageUpload} className="form-control form-control-sm" />
+      <div className="row">
+        {/* Left Sidebar - Make it collapsible on mobile */}
+        <div className="col-lg-3 col-md-4">
+          <div className="profile-sidebar card mb-3">
+            <div className="d-lg-none">
+              <button 
+                className="btn btn-link w-100 text-start" 
+                onClick={() => setShowSidebar(!showSidebar)}
+              >
+                <i className="fas fa-bars me-2"></i>
+                Menu
+              </button>
             </div>
-          )}
-          {uploadingImage && <Spinner />}
+            <div className={`card-body ${showSidebar ? '' : 'd-none d-lg-block'}`}>
+              <div className="profile-picture-container mb-3">
+                <img
+                  src={profile.profile_picture || '/default-profile.png'}
+                  alt="Profile"
+                  className="profile-picture img-fluid rounded-circle mb-2"
+                />
+                {editing && (
+                  <div className="mt-2">
+                    <input type="file" onChange={handleImageUpload} className="form-control form-control-sm" />
+                  </div>
+                )}
+                {uploadingImage && <Spinner />}
+              </div>
+              <h3 className="mb-0">{profile.first_name} {profile.last_name}</h3>
+              <p className="text-muted">{profile.email}</p>
+              <button 
+                onClick={() => setEditing(!editing)} 
+                className={`btn ${editing ? 'btn-secondary' : 'btn-primary'} w-100`}
+              >
+                {editing ? 'Cancel Editing' : 'Edit Profile'}
+              </button>
+            </div>
+            
+            <div className="list-group list-group-flush">
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveSection('profile')}
+              >
+                <i className="fas fa-user me-2"></i> Basic Information
+              </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'medical' ? 'active' : ''}`}
+                onClick={() => setActiveSection('medical')}
+              >
+                <i className="fas fa-heartbeat me-2"></i> Medical Information
+              </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'emergency' ? 'active' : ''}`}
+                onClick={() => setActiveSection('emergency')}
+              >
+                <i className="fas fa-phone-alt me-2"></i> Emergency Contacts
+              </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'diseases' ? 'active' : ''}`}
+                onClick={() => setActiveSection('diseases')}
+              >
+                <i className="fas fa-notes-medical me-2"></i> Diseases & Conditions
+              </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'parameters' ? 'active' : ''}`}
+                onClick={() => setActiveSection('parameters')}
+              >
+                <i className="fas fa-chart-line me-2"></i> Health Parameters
+              </button>
+              <button 
+                className={`list-group-item list-group-item-action ${activeSection === 'emergency-qr' ? 'active' : ''}`}
+                onClick={() => setActiveSection('emergency-qr')}
+              >
+                <i className="fas fa-qrcode me-2"></i> Emergency QR Code
+              </button>
+            </div>
+          </div>
         </div>
-        
-        <h3 className="profile-name">{profile.first_name} {profile.last_name}</h3>
-        <p className="profile-email">{profile.email}</p>
-        
-        <button 
-          onClick={() => setEditing(!editing)} 
-          className="edit-profile-btn"
-        >
-          {editing ? 'Cancel Editing' : 'Edit Profile'}
-        </button>
-        
-        <nav className="profile-nav">
-          <button 
-            className={`profile-nav-item ${activeSection === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveSection('profile')}
-          >
-            <i className="fas fa-user"></i> Basic Information
-          </button>
-          <button 
-            className={`profile-nav-item ${activeSection === 'medical' ? 'active' : ''}`}
-            onClick={() => setActiveSection('medical')}
-          >
-            <i className="fas fa-heartbeat"></i> Medical Information
-          </button>
-          <button 
-            className={`profile-nav-item ${activeSection === 'emergency' ? 'active' : ''}`}
-            onClick={() => setActiveSection('emergency')}
-          >
-            <i className="fas fa-phone-alt"></i> Emergency Contacts
-          </button>
-          <button 
-            className={`profile-nav-item ${activeSection === 'diseases' ? 'active' : ''}`}
-            onClick={() => setActiveSection('diseases')}
-          >
-            <i className="fas fa-notes-medical"></i> Diseases & Conditions
-          </button>
-          <button 
-            className={`profile-nav-item ${activeSection === 'parameters' ? 'active' : ''}`}
-            onClick={() => setActiveSection('parameters')}
-          >
-            <i className="fas fa-chart-line"></i> Health Parameters
-          </button>
-          <button 
-            className={`profile-nav-item ${activeSection === 'emergency-qr' ? 'active' : ''}`}
-            onClick={() => setActiveSection('emergency-qr')}
-          >
-            <i className="fas fa-qrcode"></i> Emergency QR Code
-          </button>
-        </nav>
-      </div>
 
-      {/* Main Content */}
-      <div className="profile-content">
-        {activeSection === 'profile' && (
-          <div className="profile-section">
-            <h2 className="section-title">Basic Information</h2>
-            <div className="profile-field">
-              <div>
-                <label>First Name</label>
-                {editing ? (
-                  <input type="text" name="first_name" value={profile.first_name || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.first_name}</div>
-                )}
-              </div>
-              <div>
-                <label>Last Name</label>
-                {editing ? (
-                  <input type="text" name="last_name" value={profile.last_name || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.last_name}</div>
-                )}
-              </div>
-            </div>
-            
-            <div className="profile-field">
-              <div>
-                <label>Email</label>
-                {editing ? (
-                  <input type="email" name="email" value={profile.email || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.email}</div>
-                )}
-              </div>
-              <div>
-                <label>Phone</label>
-                {editing ? (
-                  <input type="tel" name="phone" value={profile.phone || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.phone}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="profile-field">
-              <div>
-                <label>Address</label>
-                {editing ? (
-                  <input type="text" name="address" value={profile.address || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.address}</div>
-                )}
-              </div>
-              <div>
-                <label>Bio</label>
-                {editing ? (
-                  <textarea name="bio" value={profile.bio || ''} onChange={handleChange} className="form-control" rows="3"></textarea>
-                ) : (
-                  <div className="profile-field-value">{profile.bio}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'medical' && (
-          <div className="profile-section">
-            <h2 className="section-title">Medical Information</h2>
-            <div className="profile-field">
-              <div>
-                <label>Date of Birth</label>
-                {editing ? (
-                  <input type="date" name="date_of_birth" value={profile.date_of_birth || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.date_of_birth}</div>
-                )}
-              </div>
-              <div>
-                <label>Gender</label>
-                {editing ? (
-                  <select name="gender" value={profile.gender || ''} onChange={handleChange} className="form-control">
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                ) : (
-                  <div className="profile-field-value">{profile.gender}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="profile-field">
-              <div>
-                <label>Blood Group</label>
-                {editing ? (
-                  <select name="blood_group" value={profile.blood_group || ''} onChange={handleChange} className="form-control">
-                    <option value="">Select Blood Group</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                  </select>
-                ) : (
-                  <div className="profile-field-value">{profile.blood_group}</div>
-                )}
-              </div>
-              <div>
-                <label>Height (cm)</label>
-                {editing ? (
-                  <input type="number" name="height" value={profile.height || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.height}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="profile-field">
-              <div>
-                <label>Weight (kg)</label>
-                {editing ? (
-                  <input type="number" name="weight" value={profile.weight || ''} onChange={handleChange} className="form-control" />
-                ) : (
-                  <div className="profile-field-value">{profile.weight}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'emergency' && (
-          <div className="profile-section">
-            <h2 className="section-title">Emergency Contact Information</h2>
-            <div className="profile-field">
-              <div>
-                <label>Emergency Contact Name</label>
-                {editing ? (
-                  <input 
-                    type="text" 
-                    name="emergency_contact_name" 
-                    value={profile.emergency_contact_name || ''} 
-                    onChange={handleChange} 
-                    className="form-control" 
-                  />
-                ) : (
-                  <div className="profile-field-value">{profile.emergency_contact_name}</div>
-                )}
-              </div>
-              <div>
-                <label>Emergency Contact Phone</label>
-                {editing ? (
-                  <input 
-                    type="tel" 
-                    name="emergency_contact_phone" 
-                    value={profile.emergency_contact_phone || ''} 
-                    onChange={handleChange} 
-                    className="form-control" 
-                  />
-                ) : (
-                  <div className="profile-field-value">{profile.emergency_contact_phone}</div>
-                )}
-              </div>
-            </div>
-            <div className="profile-field">
-              <div>
-                <label>Relationship</label>
-                {editing ? (
-                  <input 
-                    type="text" 
-                    name="emergency_contact_relationship" 
-                    value={profile.emergency_contact_relationship || ''} 
-                    onChange={handleChange} 
-                    className="form-control" 
-                  />
-                ) : (
-                  <div className="profile-field-value">{profile.emergency_contact_relationship}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === 'diseases' && (
-          <div className="profile-section">
-            <h2 className="section-title">Diseases & Medical Conditions</h2>
-            <div className="disease-list">
-              {diseaseNames.map((disease) => (
-                <span key={disease.id} className="badge bg-info me-2 mb-2">
-                  {disease.disease_name}
-                </span>
-              ))}
-            </div>
-            {editing && (
-              <div className="add-disease-form mt-4">
-                <h3 className="subsection-title">Add Disease</h3>
-                <div className="input-group">
-                  <select
-                    className="form-select"
-                    value={newDiseaseName}
-                    onChange={(e) => setNewDiseaseName(e.target.value)}
-                  >
-                    <option value="">Select a disease</option>
-                    {commonDiseases.map((disease) => (
-                      <option key={disease.id} value={disease.name}>
-                        {disease.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Or enter a new disease"
-                    value={newDiseaseName === "" ? "" : newDiseaseName}
-                    onChange={(e) => setNewDiseaseName(e.target.value)}
-                  />
-                  <button onClick={handleAddDiseaseName} className="btn btn-primary">Add</button>
+        {/* Main Content */}
+        <div className="col-lg-9 col-md-8">
+          <div className="card">
+            <div className="card-body">
+              {activeSection === 'profile' && (
+                <div className="profile-section">
+                  <h4 className="card-title mb-4">Basic Information</h4>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>First Name:</label>
+                        {editing ? (
+                          <input type="text" name="first_name" value={profile.first_name} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.first_name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Last Name:</label>
+                        {editing ? (
+                          <input type="text" name="last_name" value={profile.last_name} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.last_name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Email:</label>
+                        {editing ? (
+                          <input type="email" name="email" value={profile.email} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.email}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Phone:</label>
+                        {editing ? (
+                          <input type="tel" name="phone" value={profile.phone} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.phone}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="profile-field">
+                        <label>Address:</label>
+                        {editing ? (
+                          <input type="text" name="address" value={profile.address} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.address}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="profile-field">
+                        <label>Bio:</label>
+                        {editing ? (
+                          <textarea name="bio" value={profile.bio} onChange={handleChange} className="form-control" rows="3"></textarea>
+                        ) : (
+                          <p className="form-control-plaintext">{profile.bio}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <h3 className="subsection-title mt-5">Allergies</h3>
-            <div className="allergy-list">
-              {allergies.map((allergy) => (
-                <span key={allergy.id} className="badge bg-warning text-dark me-2 mb-2">
-                  {allergy.allergy_name} ({allergy.severity})
-                </span>
-              ))}
-            </div>
-            {editing && (
-              <div className="add-allergy-form mt-4">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Allergy name"
-                    value={newAllergy.name}
-                    onChange={(e) => setNewAllergy({...newAllergy, name: e.target.value})}
-                  />
-                  <select
-                    className="form-select"
-                    value={newAllergy.severity}
-                    onChange={(e) => setNewAllergy({...newAllergy, severity: e.target.value})}
-                  >
-                    <option value="mild">Mild</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="severe">Severe</option>
-                  </select>
-                  <button onClick={handleAddAllergy} className="btn btn-primary">Add</button>
+              {activeSection === 'medical' && (
+                <div className="medical-section">
+                  <h4 className="card-title mb-4">Medical Information</h4>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Date of Birth:</label>
+                        {editing ? (
+                          <input type="date" name="date_of_birth" value={profile.date_of_birth} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.date_of_birth}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Gender:</label>
+                        {editing ? (
+                          <select name="gender" value={profile.gender} onChange={handleChange} className="form-control">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        ) : (
+                          <p className="form-control-plaintext">{profile.gender}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Blood Group:</label>
+                        {editing ? (
+                          <select name="blood_group" value={profile.blood_group} onChange={handleChange} className="form-control">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                          </select>
+                        ) : (
+                          <p className="form-control-plaintext">{profile.blood_group}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Height (cm):</label>
+                        {editing ? (
+                          <input type="number" name="height" value={profile.height} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.height}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Weight (kg):</label>
+                        {editing ? (
+                          <input type="number" name="weight" value={profile.weight} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.weight}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {activeSection === 'parameters' && (
-          <div className="profile-section">
-            <h2 className="section-title">Health Parameters</h2>
-            <div className="parameter-list">
-              {parameters.map((param) => (
-                <div key={param.id} className="parameter-item">
-                  <span className="parameter-name">{param.parameter_name}</span>
-                  <span className="parameter-value">{param.value} {param.unit}</span>
-                  <span className="parameter-date">
-                    {new Date(param.date_recorded).toLocaleDateString()}
-                  </span>
+              {activeSection === 'emergency' && (
+                <div className="emergency-section">
+                  <h4 className="card-title mb-4">Emergency Contact Information</h4>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Emergency Contact Name:</label>
+                        {editing ? (
+                          <input type="text" name="emergency_contact_name" value={profile.emergency_contact_name} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.emergency_contact_name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Emergency Contact Phone:</label>
+                        {editing ? (
+                          <input type="tel" name="emergency_contact_phone" value={profile.emergency_contact_phone} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.emergency_contact_phone}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="profile-field">
+                        <label>Relationship:</label>
+                        {editing ? (
+                          <input type="text" name="emergency_contact_relationship" value={profile.emergency_contact_relationship} onChange={handleChange} className="form-control" />
+                        ) : (
+                          <p className="form-control-plaintext">{profile.emergency_contact_relationship}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-            {editing && (
-              <div className="add-parameter-form mt-4">
-                <h3 className="subsection-title">Add Parameter</h3>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Parameter name"
-                    value={newParameter.name}
-                    onChange={(e) => setNewParameter({...newParameter, name: e.target.value})}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Value"
-                    value={newParameter.value}
-                    onChange={(e) => setNewParameter({...newParameter, value: e.target.value})}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Unit"
-                    value={newParameter.unit}
-                    onChange={(e) => setNewParameter({...newParameter, unit: e.target.value})}
-                  />
-                  <button onClick={handleAddParameter} className="btn btn-primary">Add</button>
+              )}
+
+              {activeSection === 'diseases' && (
+                <div className="diseases-section">
+                  <h4 className="card-title mb-4">Diseases & Medical Conditions</h4>
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="disease-list mb-4">
+                        {diseaseNames.map((disease) => (
+                          <span key={disease.id} className="badge bg-warning text-dark me-2 mb-2 p-2">
+                            {disease.disease_name}
+                          </span>
+                        ))}
+                      </div>
+                      {editing && (
+                        <div className="input-group mb-3">
+                          <select
+                            className="form-select"
+                            value={newDiseaseName}
+                            onChange={(e) => setNewDiseaseName(e.target.value)}
+                          >
+                            <option value="">Select a disease</option>
+                            {commonDiseases.map((disease) => (
+                              <option key={disease.id} value={disease.name}>
+                                {disease.name}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Or enter a new disease"
+                            value={newDiseaseName === "" ? "" : newDiseaseName}
+                            onChange={(e) => setNewDiseaseName(e.target.value)}
+                          />
+                          <button onClick={handleAddDiseaseName} className="btn btn-primary">Add</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Allergies Section */}
+                  <h5 className="card-title mb-3 mt-4">Allergies</h5>
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="allergy-list mb-4">
+                        {allergies.map((allergy) => (
+                          <span key={allergy.id} className="badge bg-warning text-dark me-2 mb-2 p-2">
+                            {allergy.allergy_name} ({allergy.severity})
+                          </span>
+                        ))}
+                      </div>
+                      {editing && (
+                        <div className="row g-2">
+                          <div className="col-sm-6">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Allergy name"
+                              value={newAllergy.name}
+                              onChange={(e) => setNewAllergy({...newAllergy, name: e.target.value})}
+                            />
+                          </div>
+                          <div className="col-sm-4">
+                            <select
+                              className="form-select"
+                              value={newAllergy.severity}
+                              onChange={(e) => setNewAllergy({...newAllergy, severity: e.target.value})}
+                            >
+                              <option value="mild">Mild</option>
+                              <option value="moderate">Moderate</option>
+                              <option value="severe">Severe</option>
+                            </select>
+                          </div>
+                          <div className="col-sm-2">
+                            <button onClick={handleAddAllergy} className="btn btn-primary w-100">Add</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {activeSection === 'emergency-qr' && (
-          <div className="emergency-qr-section">
-            <h2 className="section-title">Emergency Medical QR Code</h2>
-            <div className="alert alert-info">
-              <i className="fas fa-info-circle me-2"></i>
-              This QR code contains your essential medical information for emergency situations. 
-              Keep it accessible, such as in your wallet, on your phone, or on emergency medical ID.
-            </div>
-            
-            <div className="qrcode-container">
-              <EmergencyQRCode size={180} />
-            </div>
-            
-            <p className="section-description">
-              <i className="fas fa-shield-alt me-2"></i>
-              <strong>Privacy Note:</strong> The QR code is updated automatically when you change your 
-              profile information, allergies, or medical conditions. The information included in the 
-              QR code is limited to what would be helpful in a medical emergency.
-            </p>
-          </div>
-        )}
+              {activeSection === 'parameters' && (
+                <div className="parameters-section">
+                  <h4 className="card-title mb-4">Health Parameters</h4>
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="parameter-list mb-4">
+                        {parameters.map((param) => (
+                          <div key={param.id} className="badge bg-success text-dark me-2 mb-2 p-2">
+                            {param.parameter_name}: {param.value} {param.unit}
+                          </div>
+                        ))}
+                      </div>
+                      {editing && (
+                        <div className="row g-2">
+                          <div className="col-sm-4">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Parameter name"
+                              value={newParameter.name}
+                              onChange={(e) => setNewParameter({...newParameter, name: e.target.value})}
+                            />
+                          </div>
+                          <div className="col-sm-4">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Value"
+                              value={newParameter.value}
+                              onChange={(e) => setNewParameter({...newParameter, value: e.target.value})}
+                            />
+                          </div>
+                          <div className="col-sm-2">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Unit"
+                              value={newParameter.unit}
+                              onChange={(e) => setNewParameter({...newParameter, unit: e.target.value})}
+                            />
+                          </div>
+                          <div className="col-sm-2">
+                            <button onClick={handleAddParameter} className="btn btn-primary w-100">Add</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-        {editing && activeSection !== 'emergency-qr' && (
-          <div className="mt-4">
-            <button onClick={handleSave} className="btn btn-success">
-              Save Changes
-            </button>
+              {activeSection === 'emergency-qr' && (
+                <div className="emergency-qr-section">
+                  <h4 className="card-title mb-4">Emergency Medical QR Code</h4>
+                  <div className="row">
+                    <div className="col-md-8 offset-md-2">
+                      <div className="alert alert-info">
+                        <i className="fas fa-info-circle me-2"></i>
+                        This QR code contains your essential medical information for emergency situations. 
+                        Keep it accessible, such as in your wallet, on your phone, or on emergency medical ID.
+                      </div>
+                      <EmergencyQRCode size={180} />
+                      <div className="mt-4">
+                        <p className="text-muted">
+                          <i className="fas fa-shield-alt me-2"></i>
+                          <strong>Privacy Note:</strong> The QR code is updated automatically when you change your 
+                          profile information, allergies, or medical conditions. The information included in the 
+                          QR code is limited to what would be helpful in a medical emergency.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {editing && activeSection !== 'emergency-qr' && activeSection !== 'parameters' && activeSection !== 'diseases' && (
+                <div className="mt-4 text-end">
+                  <button onClick={handleSave} className="btn btn-success">
+                    Save Changes
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
