@@ -1,6 +1,6 @@
 # DigiHealth - Modern Healthcare Platform
 
-![DigiHealth Logo](public/logo192.png)
+![DigiHealth Logo](public/favicon_io/android-chrome-512x512-Photoroom.png)
 
 DigiHealth is a modern, secure, and intelligent healthcare platform that empowers individuals to take control of their health journey. Built with React and powered by advanced AI capabilities, DigiHealth provides a comprehensive solution for managing personal health information, medical records, and healthcare interactions.
 
@@ -124,8 +124,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, please:
 - Open an issue in the GitHub repository
-- Contact the development team at support@digihealth.com
-- Visit our [documentation](https://docs.digihealth.com)
+- Contact the development team at roshankumarrk7488@gmail.com
 
 ## 🔮 Future Enhancements
 
