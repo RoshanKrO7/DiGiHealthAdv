@@ -75,6 +75,12 @@ The application will be available at `http://localhost:3000`
 - **Storage**: Supabase Storage
 - **Deployment**: GitHub Pages
 
+## 🚢 Deployment
+
+- Automatic deploy is configured with GitHub Actions in `.github/workflows/deploy-pages.yml`.
+- Every push to the `main` branch triggers a production build and publishes the `build/` output to the `gh-pages` branch.
+- In repository settings, ensure **Pages** is configured to serve from **Branch: `gh-pages` / root**.
+
 ## 📁 Project Structure
 
 ```
